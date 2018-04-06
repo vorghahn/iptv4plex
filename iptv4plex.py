@@ -703,6 +703,7 @@ if __name__ == "__main__":
 	print("\n##############################################################")
 	print("EPG url is %s/epg.xml" % SERVER_HOST)
 	print("Plex Live TV url is %s" % SERVER_HOST)
+	print("Donations: PayPal to vorghahn.sstv@gmail.com  or BTC - 19qvdk7JYgFruie73jE4VvW7ZJBv8uGtFb")
 	print("##############################################################\n")
 
 	if __version__ < latest_ver:
