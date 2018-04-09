@@ -687,7 +687,7 @@ def auto(request_file):
 	logger.info("Channel %s playlist was requested by %s", channel,
 	            request.environ.get('REMOTE_ADDR'))
 
-	url = chan_map[0][channel].url
+	url = chan_map['0'][channel].url
 	if request.args.get('url'):
 		logger.info("Piping custom URL")
 		url = request.args.get('url')
