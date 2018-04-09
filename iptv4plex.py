@@ -40,8 +40,9 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.1
+__version__ = 0.2
 # Changelog
+# 0.2 - Added tunerlimits and subnets for each m3u8 eg ip:port/1/ the original ip:port/ will return them all merged still
 # 0.1 - Initial testing release
 
 
@@ -86,6 +87,7 @@ LISTEN_PORT = 99
 SERVER_HOST = "http://" + LISTEN_IP + ":" + str(LISTEN_PORT)
 M3U8URL = ''
 XMLURL = ''
+TUNERLIMITS = []
 
 
 # LINUX/WINDOWS
@@ -105,7 +107,7 @@ else:
 ############################################################
 
 def load_settings():
-	global LISTEN_IP, LISTEN_PORT, SERVER_HOST, M3U8URL, XMLURL, FFMPEGLOC
+	global LISTEN_IP, LISTEN_PORT, SERVER_HOST, M3U8URL, XMLURL, FFMPEGLOC, TUNERLIMITS
 	if not os.path.isfile(os.path.join(os.path.dirname(sys.argv[0]), 'proxysettings.json')):
 		logger.debug("No config file found.")
 	try:
@@ -119,6 +121,8 @@ def load_settings():
 				M3U8URL = config["m3u8url"]
 			if "xmlurl" in config:
 				XMLURL = config["xmlurl"]
+			if "tunerlimits" in config:
+				TUNERLIMITS = config["tunerlimits"].split(';')
 			if "ip" in config and "port" in config:
 				LISTEN_IP = config["ip"]
 				LISTEN_PORT = config["port"]
@@ -135,13 +139,16 @@ def load_settings():
 			os.system('cls' if os.name == 'nt' else 'clear')
 			config["m3u8url"] = input("Copy paste in m3u8 URL, seperate multiple using ;")
 			os.system('cls' if os.name == 'nt' else 'clear')
-			config["m3u8url"] = input("Copy paste in xml URL, seperate multiple using ;")
+			config["tunerlimits"] = input("Enter the maxinum number of connections each m3u8 allows (same order as m3u8 was entered), seperate multiple using ;")
+			os.system('cls' if os.name == 'nt' else 'clear')
+			config["xmlurl"] = input("Copy paste in xml URL, seperate multiple using ;")
 			LISTEN_IP = config["ip"]
 			LISTEN_PORT = config["port"]
 			SERVER_HOST = "http://" + LISTEN_IP + ":" + str(LISTEN_PORT)
 			XMLURL = config["xmlurl"]
 			M3U8URL = config["m3u8url"]
 			FFMPEGLOC = config["ffmpegloc"]
+			TUNERLIMITS = config["tunerlimits"].split(';')
 			with open(os.path.join(os.path.dirname(sys.argv[0]), 'proxysettings.json'), 'w') as fp:
 				dump(config, fp)
 		else:
@@ -251,71 +258,87 @@ if not 'headless' in sys.argv:
 			noteM3u8 = tkinter.Label(master, textvariable=self.noteM3u8, height=2)
 			noteM3u8.grid(row=2, column=3)
 
+			self.labelTuner = tkinter.StringVar()
+			self.labelTuner.set("Tuner limits")
+			labelTuner = tkinter.Label(master, textvariable=self.labelTuner, height=2)
+			labelTuner.grid(row=3, column=1)
+			#
+			userTuner = tkinter.StringVar()
+			userTuner.set("")
+			self.Tuner = tkinter.Entry(master, textvariable=userTuner, width=30)
+			self.Tuner.grid(row=3, column=2)
+			#
+			self.noteTuner = tkinter.StringVar()
+			self.noteTuner.set("separate using a ;")
+			noteTuner = tkinter.Label(master, textvariable=self.noteTuner, height=2)
+			noteTuner.grid(row=3, column=3)
+
 			self.labelXml = tkinter.StringVar()
 			self.labelXml.set("xmltv url")
 			labelXml = tkinter.Label(master, textvariable=self.labelXml, height=2)
-			labelXml.grid(row=3, column=1)
+			labelXml.grid(row=4, column=1)
 			#
 			userXml = tkinter.StringVar()
-			userXml.set("blogs123")
+			userXml.set("")
 			self.xml = tkinter.Entry(master, textvariable=userXml, width=30)
-			self.xml.grid(row=3, column=2)
+			self.xml.grid(row=4, column=2)
 			#
 			self.noteXml = tkinter.StringVar()
 			self.noteXml.set("separate using a ;")
 			noteXml = tkinter.Label(master, textvariable=self.noteXml, height=2)
-			noteXml.grid(row=3, column=3)
+			noteXml.grid(row=4, column=3)
 
 			self.labelFfmpeg = tkinter.StringVar()
 			self.labelFfmpeg.set("FFMPEG Location")
 			labelFfmpeg = tkinter.Label(master, textvariable=self.labelFfmpeg, height=2)
-			labelFfmpeg.grid(row=4, column=1)
+			labelFfmpeg.grid(row=5, column=1)
 
 			userFfmpeg = tkinter.StringVar()
 			userFfmpeg.set('')
 			self.ffmpeg = tkinter.Entry(master, textvariable=userFfmpeg, width=30)
-			self.ffmpeg.grid(row=4, column=2)
+			self.ffmpeg.grid(row=5, column=2)
 
 			self.labelIP = tkinter.StringVar()
 			self.labelIP.set("Listen IP")
 			labelIP = tkinter.Label(master, textvariable=self.labelIP, height=2)
-			labelIP.grid(row=5, column=1)
+			labelIP.grid(row=6, column=1)
 
 			userIP = tkinter.StringVar()
 			userIP.set(LISTEN_IP)
 			self.ip = tkinter.Entry(master, textvariable=userIP, width=30)
-			self.ip.grid(row=5, column=2)
+			self.ip.grid(row=6, column=2)
 
 			self.noteIP = tkinter.StringVar()
 			self.noteIP.set("If using on other machines then set a static IP and use that.")
 			noteIP = tkinter.Label(master, textvariable=self.noteIP, height=2)
-			noteIP.grid(row=5, column=3)
+			noteIP.grid(row=6, column=3)
 
 			self.labelPort = tkinter.StringVar()
 			self.labelPort.set("Listen Port")
 			labelPort = tkinter.Label(master, textvariable=self.labelPort, height=2)
-			labelPort.grid(row=6, column=1)
+			labelPort.grid(row=7, column=1)
 
 			userPort = tkinter.IntVar()
 			userPort.set(LISTEN_PORT)
 			self.port = tkinter.Entry(master, textvariable=userPort, width=30)
-			self.port.grid(row=6, column=2)
+			self.port.grid(row=7, column=2)
 
 			self.notePort = tkinter.StringVar()
 			self.notePort.set("If 80 doesn't work try 99")
 			notePort = tkinter.Label(master, textvariable=self.notePort, height=2)
-			notePort.grid(row=6, column=3)
+			notePort.grid(row=7, column=3)
 
 			def gather():
 				config = {}
 				config["m3u8url"] = userM3u8.get()
+				config["tunerlimits"] = userTuner.get()
 				config["xmlurl"] = userXml.get()
 				config["ffmpegloc"] = userFfmpeg.get()
 				config["ip"] = userIP.get()
 				config["port"] = userPort.get()
 				for widget in master.winfo_children():
 					widget.destroy()
-				global LISTEN_IP, LISTEN_PORT, SERVER_HOST, XMLURL, M3U8URL, FFMPEGLOC
+				global LISTEN_IP, LISTEN_PORT, SERVER_HOST, XMLURL, M3U8URL, FFMPEGLOC, TUNERLIMITS
 				with open(os.path.join(os.path.dirname(sys.argv[0]), 'proxysettings.json'), 'w') as fp:
 					dump(config, fp)
 
@@ -325,6 +348,7 @@ if not 'headless' in sys.argv:
 				XMLURL = config["xmlurl"]
 				M3U8URL = config["m3u8url"]
 				FFMPEGLOC = config["ffmpegloc"]
+				TUNERLIMITS = config["tunerlimits"].split(';')
 
 
 				button1 = tkinter.Button(master, text="Launch!!", width=20,
@@ -332,7 +356,7 @@ if not 'headless' in sys.argv:
 				button1.grid(row=1)
 
 			button1 = tkinter.Button(master, text="Submit", width=20, command=lambda: gather())
-			button1.grid(row=7, column=2)
+			button1.grid(row=8, column=2)
 
 ############################################################
 # MISC Functions
@@ -366,21 +390,26 @@ def thread_updater():
 
 def build_channel_map():
 	#todo parses merged m3u8s into a chan_map dict for later use.
-	chan_map = {}
+	chan_map = {'0':{}}
 	obtain_m3u8()
 	logger.debug("Loading channel list")
 	split = [x for x in m3u8_playlist.split("\n") if x != ""]
 	for i in range(0,len(split),2):
-		count = len(chan_map)+1
+		count = len(chan_map['0'])+1
 		# print(i)
 		retVal = channelinfo()
 		meta = split[i].split(',')
 		retVal.channame = meta[1]
 		retVal.channum = count #int(find_between(meta[0],'channel-id="','"'))
 		retVal.epg = find_between(meta[0],'tvg-id="','"')
+		m3u8 = find_between(meta[0],'group-title="','"')
 		retVal.url = split[i+1].strip()
-		chan_map[count] = {}
-		chan_map[count] = retVal
+		chan_map['0'][count] = {}
+		chan_map['0'][count] = retVal
+		if not m3u8 in chan_map:
+			chan_map[m3u8] = {}
+		chan_map[m3u8][count] = {}
+		chan_map[m3u8][count] = retVal
 	return chan_map
 
 def build_playlist(SERVER_HOST):
@@ -411,12 +440,14 @@ def obtain_m3u8():
 	urlstring = M3U8URL
 
 	urlstring = urlstring.split(';')
+	m3u8_number = 0
 	for url in urlstring:
-		m3u8_merger(url)
+		m3u8_number+=1
+		m3u8_merger(url, m3u8_number)
 
 
 		
-def m3u8_merger(url):
+def m3u8_merger(url, m3u8_number):
 	if url != '':
 		if url.startswith('http'):
 			logger.debug("m3u8 url")
@@ -441,7 +472,7 @@ def m3u8_merger(url):
 					count+=1
 					grouper = inputm3u8[i]
 					grouper = grouper.split(',')
-					grouper = grouper[0] + ' channel-id="%s"' % (count) + "," + grouper[1]
+					grouper = grouper[0] + ' channel-id="%s" group-title="%s", %s' % (count, m3u8_number, grouper[1])
 					m3u8_playlist += grouper + "\n"
 				else:
 					m3u8_playlist += inputm3u8[i] + "\n"
@@ -504,17 +535,17 @@ def xmltv_merger(xml_url):
 # PLEX Live
 ############################################################
 
-def discover():
+def discover(tunerLimit=6,tunerNumber=""):
 	discoverData = {
-		'FriendlyName': 'iptv4plex',
+		'FriendlyName': 'iptv4plex%s' % tunerNumber,
 		'Manufacturer': 'Silicondust',
 		'ModelNumber': 'HDTC-2US',
 		'FirmwareName': 'hdhomeruntc_atsc',
-		'TunerCount': 6,
+		'TunerCount': tunerLimit,
 		'FirmwareVersion': '20150826',
 		'DeviceID': '12345678',
 		'DeviceAuth': 'test1234',
-		'BaseURL': SERVER_HOST,
+		'BaseURL': SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber,
 		'LineupURL': '%s/lineup.json' % SERVER_HOST
 	}
 	return jsonify(discoverData)
@@ -529,15 +560,14 @@ def status():
 	})
 
 
-def lineup():
+def lineup(tuner='0'):
 	global chan_map
 	lineup = []
-	for c in range(1, len(chan_map)+1):
+	for c in range(1, len(chan_map[tuner])+1):
 		template = "{0}/auto/v{1}"
-		print(SERVER_HOST, chan_map[c].channum)
-		url = template.format(SERVER_HOST, chan_map[c].channum)
+		url = template.format(SERVER_HOST, chan_map[tuner][c].channum)
 		lineup.append({'GuideNumber': str(len(lineup) + 1),
-		               'GuideName': chan_map[c].channame,
+		               'GuideName': chan_map[tuner][c].channame,
 		               'URL': url
 		               })
 
@@ -547,17 +577,17 @@ def lineup_post():
 	return ''
 
 
-def device():
+def device(tunerLimit=6, tunerNumber=""):
 	discoverData = {
-		'FriendlyName': 'iptv4plex',
+		'FriendlyName': 'iptv4plex%s' % tunerNumber,
 		'Manufacturer': 'Silicondust',
 		'ModelNumber': 'HDTC-2US',
 		'FirmwareName': 'hdhomeruntc_atsc',
-		'TunerCount': 6,
+		'TunerCount': tunerLimit,
 		'FirmwareVersion': '20150826',
 		'DeviceID': '12345678',
 		'DeviceAuth': 'test1234',
-		'BaseURL': SERVER_HOST,
+		'BaseURL': SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber,
 		'LineupURL': '%s/lineup.json' % SERVER_HOST
 	}
 	return render_template('device.xml', data=discoverData), {'Content-Type': 'application/xml'}
@@ -566,6 +596,28 @@ def device():
 ############################################################
 # Flask Routes
 ############################################################
+@app.route('/<tuner>/<request_file>')
+def tvh(tuner, request_file):
+	try:
+		t_limit = TUNERLIMITS[int(tuner)-1]
+	except:
+		t_limit = 6
+		logger.info("Setting tuner limits failed, using 6")
+	logger.info("%s/%s was requested by %s" % (tuner, request_file, request.environ.get('REMOTE_ADDR')))
+	if request_file.lower() == 'lineup_status.json':
+		return status()
+	elif request_file.lower() == 'discover.json':
+		return discover(t_limit,tuner)
+	elif request_file.lower() == 'lineup.json':
+		return lineup(tuner)
+	elif request_file.lower() == 'lineup.post':
+		return lineup_post()
+	elif request_file.lower() == 'device.xml':
+		return device(t_limit,tuner)
+	else:
+		logger.info("Unknown requested %r by %s", request_file, request.environ.get('REMOTE_ADDR'))
+		abort(404, "Unknown request")
+
 
 @app.route('/<request_file>')
 def bridge(request_file):
@@ -635,7 +687,7 @@ def auto(request_file):
 	logger.info("Channel %s playlist was requested by %s", channel,
 	            request.environ.get('REMOTE_ADDR'))
 
-	url = chan_map[channel].url
+	url = chan_map[0][channel].url
 	if request.args.get('url'):
 		logger.info("Piping custom URL")
 		url = request.args.get('url')
