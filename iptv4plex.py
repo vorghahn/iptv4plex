@@ -133,13 +133,13 @@ def load_settings():
 		if HEADLESS:
 			config = {}
 			config["ip"] = input("Listening IP address?(ie recommend 127.0.0.1 for beginners)")
-			config["port"] = int(input("and port?(ie 6969, Linux/Mac may require a number greater than 1024)"))
+			config["port"] = int(input("and port?(ie 6969, Unix require elevation for a number greater than 1024)"))
 			os.system('cls' if os.name == 'nt' else 'clear')
-			config["ffmpegloc"] = input("FFMPEG install location") #todo os.walk detection
+			config["ffmpegloc"] = input("FFMPEG install location (full path to ffmpeg executable)") #todo os.walk detection
 			os.system('cls' if os.name == 'nt' else 'clear')
 			config["m3u8url"] = input("Copy paste in m3u8 URL, seperate multiple using ;")
 			os.system('cls' if os.name == 'nt' else 'clear')
-			config["tunerlimits"] = input("Enter the maxinum number of connections each m3u8 allows (same order as m3u8 was entered), seperate multiple using ;")
+			config["tunerlimits"] = input("Enter the maximum number of connections each m3u8 allows (same order as m3u8 was entered), seperate multiple using ;")
 			os.system('cls' if os.name == 'nt' else 'clear')
 			config["xmlurl"] = input("Copy paste in xml URL, seperate multiple using ;")
 			LISTEN_IP = config["ip"]
@@ -154,7 +154,6 @@ def load_settings():
 		else:
 			root = tkinter.Tk()
 			root.title("IPTV4PLEX Setup")
-			root.geometry('750x600')
 			app = GUI(root)  # calling the class to run
 			root.mainloop()
 		installer()
@@ -244,12 +243,12 @@ if not 'headless' in sys.argv:
 			noteText.grid(row=1, column=3)
 
 			self.labelM3u8 = tkinter.StringVar()
-			self.labelM3u8.set("m3u8 url")
+			self.labelM3u8.set("m3u8 url(s)")
 			labelM3u8 = tkinter.Label(master, textvariable=self.labelM3u8, height=2)
 			labelM3u8.grid(row=2, column=1)
 			#
 			userM3u8 = tkinter.StringVar()
-			userM3u8.set("")
+			userM3u8.set("www.testurl.com/playlist.m3u8")
 			self.m3u8 = tkinter.Entry(master, textvariable=userM3u8, width=30)
 			self.m3u8.grid(row=2, column=2)
 			#
@@ -259,32 +258,32 @@ if not 'headless' in sys.argv:
 			noteM3u8.grid(row=2, column=3)
 
 			self.labelTuner = tkinter.StringVar()
-			self.labelTuner.set("Tuner limits")
+			self.labelTuner.set("Tuner limit(s)")
 			labelTuner = tkinter.Label(master, textvariable=self.labelTuner, height=2)
 			labelTuner.grid(row=3, column=1)
 			#
 			userTuner = tkinter.StringVar()
-			userTuner.set("")
+			userTuner.set("6")
 			self.Tuner = tkinter.Entry(master, textvariable=userTuner, width=30)
 			self.Tuner.grid(row=3, column=2)
 			#
 			self.noteTuner = tkinter.StringVar()
-			self.noteTuner.set("separate using a ;")
+			self.noteTuner.set("Number of connections allowed to each m3u8, separate using a ;")
 			noteTuner = tkinter.Label(master, textvariable=self.noteTuner, height=2)
 			noteTuner.grid(row=3, column=3)
 
 			self.labelXml = tkinter.StringVar()
-			self.labelXml.set("xmltv url")
+			self.labelXml.set("xmltv url(s)")
 			labelXml = tkinter.Label(master, textvariable=self.labelXml, height=2)
 			labelXml.grid(row=4, column=1)
 			#
 			userXml = tkinter.StringVar()
-			userXml.set("")
+			userXml.set("www.testurl.com/epg.xml")
 			self.xml = tkinter.Entry(master, textvariable=userXml, width=30)
 			self.xml.grid(row=4, column=2)
 			#
 			self.noteXml = tkinter.StringVar()
-			self.noteXml.set("separate using a ;")
+			self.noteXml.set("One xml can serve multiple m3u8s (channels are linked using tvg-id) separate using a ;")
 			noteXml = tkinter.Label(master, textvariable=self.noteXml, height=2)
 			noteXml.grid(row=4, column=3)
 
@@ -294,9 +293,14 @@ if not 'headless' in sys.argv:
 			labelFfmpeg.grid(row=5, column=1)
 
 			userFfmpeg = tkinter.StringVar()
-			userFfmpeg.set('')
+			userFfmpeg.set('C:\\ffmpeg\\bin\\ffmpeg.exe')
 			self.ffmpeg = tkinter.Entry(master, textvariable=userFfmpeg, width=30)
 			self.ffmpeg.grid(row=5, column=2)
+
+			self.noteFfmpeg = tkinter.StringVar()
+			self.noteFfmpeg.set("Full path to ffmpeg executable")
+			noteFfmpeg = tkinter.Label(master, textvariable=self.noteFfmpeg, height=2)
+			noteFfmpeg.grid(row=5, column=3)
 
 			self.labelIP = tkinter.StringVar()
 			self.labelIP.set("Listen IP")
@@ -324,7 +328,7 @@ if not 'headless' in sys.argv:
 			self.port.grid(row=7, column=2)
 
 			self.notePort = tkinter.StringVar()
-			self.notePort.set("If 80 doesn't work try 99")
+			self.notePort.set("If 80 doesn't work try 6969 (ports under 1024 require elevation in Unix)")
 			notePort = tkinter.Label(master, textvariable=self.notePort, height=2)
 			notePort.grid(row=7, column=3)
 
