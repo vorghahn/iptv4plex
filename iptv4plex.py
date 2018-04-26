@@ -54,13 +54,13 @@ latestfile = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/iptv4p
 if not sys.argv[0].endswith('.py'):
 	if platform.system() == 'Linux':
 		type = "Linux/"
-		latestfile = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/Linux/sstvProxy"
+		latestfile = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/Linux/iptv4plex"
 	elif platform.system() == 'Windows':
 		type = "Windows/"
-		latestfile = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/Windows/sstvproxy.exe"
+		latestfile = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/Windows/iptv4plex.exe"
 	elif platform.system() == 'Darwin':
 		type = "Macintosh/"
-		latestfile = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/Macintosh/sstvproxy"
+		latestfile = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/Macintosh/iptv4plex"
 url = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/%sversion.txt" % type
 latest_ver = float(json.loads(requests.urlopen(url).read().decode('utf-8'))['Version'])
 
@@ -157,8 +157,8 @@ def load_settings():
 			app = GUI(root)  # calling the class to run
 			root.mainloop()
 		installer()
-	if 'install' in sys.argv:
-		installer()
+	# if 'install' in sys.argv:
+	installer()
 
 
 ############################################################
@@ -547,7 +547,7 @@ def discover(tunerLimit=6,tunerNumber=""):
 		'FirmwareName': 'hdhomeruntc_atsc',
 		'TunerCount': tunerLimit,
 		'FirmwareVersion': '20150826',
-		'DeviceID': '12345678',
+		'DeviceID': '12345678%s' % tunerNumber,
 		'DeviceAuth': 'test1234',
 		'BaseURL': SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber,
 		'LineupURL': '%s/lineup.json' % SERVER_HOST
@@ -589,7 +589,7 @@ def device(tunerLimit=6, tunerNumber=""):
 		'FirmwareName': 'hdhomeruntc_atsc',
 		'TunerCount': tunerLimit,
 		'FirmwareVersion': '20150826',
-		'DeviceID': '12345678',
+		'DeviceID': '12345678%s' % tunerNumber,
 		'DeviceAuth': 'test1234',
 		'BaseURL': SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber,
 		'LineupURL': '%s/lineup.json' % SERVER_HOST
@@ -625,7 +625,7 @@ def tvh(tuner, request_file):
 
 @app.route('/<request_file>')
 def bridge(request_file):
-
+	logger.info("%s was requested by %s" % (request_file, request.environ.get('REMOTE_ADDR')))
 	# return epg
 	if request_file.lower().startswith('epg.'):
 		logger.info("EPG was requested by %s", request.environ.get('REMOTE_ADDR'))
