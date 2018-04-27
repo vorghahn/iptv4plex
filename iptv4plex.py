@@ -213,7 +213,7 @@ def writetemplate():
 		<manufacturer>{{ data.Manufacturer }}</manufacturer>
 		<modelName>{{ data.ModelNumber }}</modelName>
 		<modelNumber>{{ data.ModelNumber }}</modelNumber>
-		<serialNumber></serialNumber>
+		<serialNumber>{{ data.DeviceID }}</serialNumber>
 		<UDN>uuid:{{ data.DeviceID }}</UDN>
 	</device>
 </root>"""
