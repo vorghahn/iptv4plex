@@ -403,7 +403,7 @@ def build_channel_map():
 		# print(i)
 		retVal = channelinfo()
 		meta = split[i].split(',')
-		retVal.channame = meta[1]
+		retVal.channame = meta[1][1:]
 		retVal.channum = count #int(find_between(meta[0],'channel-id="','"'))
 		retVal.epg = find_between(meta[0],'tvg-id="','"')
 		m3u8 = find_between(meta[0],'group-title="','"')
@@ -548,9 +548,9 @@ def discover(tunerLimit=6,tunerNumber=""):
 		'TunerCount': tunerLimit,
 		'FirmwareVersion': '20150826',
 		'DeviceID': '12345678%s' % tunerNumber,
-		'DeviceAuth': 'test1234',
+		'DeviceAuth': 'test1234%s' % tunerNumber,
 		'BaseURL': SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber,
-		'LineupURL': '%s/lineup.json' % SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber
+		'LineupURL': '%s/lineup.json' % (SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber)
 	}
 	return jsonify(discoverData)
 
@@ -590,9 +590,9 @@ def device(tunerLimit=6, tunerNumber=""):
 		'TunerCount': tunerLimit,
 		'FirmwareVersion': '20150826',
 		'DeviceID': '12345678%s' % tunerNumber,
-		'DeviceAuth': 'test1234',
+		'DeviceAuth': 'test1234%s' % tunerNumber,
 		'BaseURL': SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber,
-		'LineupURL': '%s/lineup.json' % SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber
+		'LineupURL': '%s/lineup.json' % (SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber)
 	}
 	return render_template('device.xml', data=discoverData), {'Content-Type': 'application/xml'}
 
