@@ -550,7 +550,7 @@ def discover(tunerLimit=6,tunerNumber=""):
 		'DeviceID': '12345678%s' % tunerNumber,
 		'DeviceAuth': 'test1234',
 		'BaseURL': SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber,
-		'LineupURL': '%s/lineup.json' % SERVER_HOST
+		'LineupURL': '%s/lineup.json' % SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber
 	}
 	return jsonify(discoverData)
 
@@ -592,7 +592,7 @@ def device(tunerLimit=6, tunerNumber=""):
 		'DeviceID': '12345678%s' % tunerNumber,
 		'DeviceAuth': 'test1234',
 		'BaseURL': SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber,
-		'LineupURL': '%s/lineup.json' % SERVER_HOST
+		'LineupURL': '%s/lineup.json' % SERVER_HOST if tunerNumber == "" else SERVER_HOST + '/' + tunerNumber
 	}
 	return render_template('device.xml', data=discoverData), {'Content-Type': 'application/xml'}
 
