@@ -570,7 +570,7 @@ def lineup(tuner='0'):
 	for c in chan_map[tuner]:
 		template = "{0}/auto/v{1}"
 		url = template.format(SERVER_HOST, chan_map[tuner][c].channum)
-		lineup.append({'GuideNumber': chan_map[tuner][c].channum,
+		lineup.append({'GuideNumber': str(chan_map[tuner][c].channum),
 		               'GuideName': chan_map[tuner][c].channame,
 		               'URL': url
 		               })
