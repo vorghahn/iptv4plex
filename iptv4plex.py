@@ -83,7 +83,7 @@ class channelinfo:
 
 # These are just defaults, place your settings in a file called proxysettings.json in the same directory
 LISTEN_IP = "127.0.0.1"
-LISTEN_PORT = 99
+LISTEN_PORT = 80
 SERVER_HOST = "http://" + LISTEN_IP + ":" + str(LISTEN_PORT)
 M3U8URL = ''
 XMLURL = ''
@@ -183,8 +183,8 @@ logger.addHandler(console_handler)
 if not os.path.isdir(os.path.join(os.path.dirname(sys.argv[0]), 'cache')):
 	os.mkdir(os.path.join(os.path.dirname(sys.argv[0]), 'cache'))
 file_handler = RotatingFileHandler(os.path.join(os.path.dirname(sys.argv[0]), 'cache', 'status.log'),
-                                   maxBytes=1024 * 1024 * 2,
-                                   backupCount=5)
+								   maxBytes=1024 * 1024 * 2,
+								   backupCount=5)
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(log_formatter)
 logger.addHandler(file_handler)
@@ -328,7 +328,7 @@ if not 'headless' in sys.argv:
 			self.port.grid(row=7, column=2)
 
 			self.notePort = tkinter.StringVar()
-			self.notePort.set("If 80 doesn't work try 6969 (ports under 1024 require elevation in Unix)")
+			self.notePort.set("If 80 doesn't work try 5004 (ports under 1024 require elevation in Unix)")
 			notePort = tkinter.Label(master, textvariable=self.notePort, height=2)
 			notePort.grid(row=7, column=3)
 
@@ -356,7 +356,7 @@ if not 'headless' in sys.argv:
 
 
 				button1 = tkinter.Button(master, text="Launch!!", width=20,
-				                         command=lambda: self.client_exit(master))
+										 command=lambda: self.client_exit(master))
 				button1.grid(row=1)
 
 			button1 = tkinter.Button(master, text="Submit", width=20, command=lambda: gather())
@@ -571,9 +571,9 @@ def lineup(tuner='0'):
 		template = "{0}/auto/v{1}"
 		url = template.format(SERVER_HOST, chan_map[tuner][c].channum)
 		lineup.append({'GuideNumber': str(chan_map[tuner][c].channum),
-		               'GuideName': chan_map[tuner][c].channame,
-		               'URL': url
-		               })
+					   'GuideName': chan_map[tuner][c].channame,
+					   'URL': url
+					   })
 
 	return jsonify(lineup)
 
@@ -645,27 +645,10 @@ def bridge(request_file):
 		#return send_from_directory(os.path.join(os.path.dirname(sys.argv[0]), 'cache'), 'combined.xml')
 
 	elif request_file.lower() == 'playlist.m3u8':
-		# returning Dynamic channels
-		if request.args.get('ch'):
-			chan = request.args.get('ch')
-			url = ""
-			response = redirect(url, code=302)
-			headers = dict(response.headers)
-			headers.update({'Content-Type': 'application/x-mpegURL', "Access-Control-Allow-Origin": "*"})
-			response.headers = headers
-			logger.info("Channel %s playlist was requested by %s", sanitized_channel,
-			            request.environ.get('REMOTE_ADDR'))
-			# useful for debugging
-			logger.debug("URL returned: %s" % ss_url)
-			
-			return redirect(ss_url, code=302)
-			
-		# returning dynamic playlist
-		else:
-			obtain_m3u8()
-			logger.info("All channels playlist was requested by %s", request.environ.get('REMOTE_ADDR'))
-			output = '#EXTM3U\n' + m3u8_playlist
-			return Response(output, mimetype='application/x-mpegURL')
+		obtain_m3u8()
+		logger.info("All channels playlist was requested by %s", request.environ.get('REMOTE_ADDR'))
+		output = '#EXTM3U\n' + m3u8_playlist
+		return Response(output, mimetype='application/x-mpegURL')
 
 	# HDHomeRun emulated json files for Plex Live tv.
 	elif request_file.lower() == 'lineup_status.json':
@@ -689,7 +672,7 @@ def auto(request_file):
 	logger.debug("starting pipe function")
 	channel = int(request_file.replace("v", ""))
 	logger.info("Channel %s playlist was requested by %s", channel,
-	            request.environ.get('REMOTE_ADDR'))
+				request.environ.get('REMOTE_ADDR'))
 
 	url = chan_map['0'][channel].url
 	if request.args.get('url'):
@@ -728,8 +711,8 @@ def auto(request_file):
 			proc.kill()
 
 	return Response(response=generate(), status=200, mimetype='video/mp2t',
-	                headers={'Access-Control-Allow-Origin': '*', "Content-Type": "video/mp2t",
-	                         "Content-Disposition": "inline", "Content-Transfer-Enconding": "binary"})
+					headers={'Access-Control-Allow-Origin': '*', "Content-Type": "video/mp2t",
+							 "Content-Disposition": "inline", "Content-Transfer-Enconding": "binary"})
 
 
 ############################################################
