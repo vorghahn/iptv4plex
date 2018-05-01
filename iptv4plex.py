@@ -394,26 +394,26 @@ def thread_updater():
 
 def build_channel_map():
 	#todo parses merged m3u8s into a chan_map dict for later use.
-	chan_map = {'0':{}}
+	# chan_map = {'0':{}}
 	obtain_m3u8()
 	logger.debug("Loading channel list")
-	split = [x for x in m3u8_playlist.split("\n") if x != ""]
-	for i in range(0,len(split),2):
-		count = len(chan_map['0'])+1
-		# print(i)
-		retVal = channelinfo()
-		meta = split[i].split(',')
-		retVal.channame = meta[1][1:]
-		retVal.channum = count #int(find_between(meta[0],'channel-id="','"'))
-		retVal.epg = find_between(meta[0],'tvg-id="','"')
-		m3u8 = find_between(meta[0],'group-title="','"')
-		retVal.url = split[i+1].strip()
-		chan_map['0'][count] = {}
-		chan_map['0'][count] = retVal
-		if not m3u8 in chan_map:
-			chan_map[m3u8] = {}
-		chan_map[m3u8][count] = {}
-		chan_map[m3u8][count] = retVal
+	# split = [x for x in m3u8_playlist.split("\n") if x != ""]
+	# for i in range(0,len(split),2):
+	# 	count = len(chan_map['0'])+1
+	# 	# print(i)
+	# 	retVal = channelinfo()
+	# 	meta = split[i].split(',')
+	# 	retVal.channame = meta[1][1:]
+	# 	retVal.channum = count #int(find_between(meta[0],'channel-id="','"'))
+	# 	retVal.epg = find_between(meta[0],'tvg-id="','"')
+	# 	m3u8 = find_between(meta[0],'group-title="','"')
+	# 	retVal.url = split[i+1].strip()
+	# 	chan_map['0'][count] = {}
+	# 	chan_map['0'][count] = retVal
+	# 	if not m3u8 in chan_map:
+	# 		chan_map[m3u8] = {}
+	# 	chan_map[m3u8][count] = {}
+	# 	chan_map[m3u8][count] = retVal
 	return chan_map
 
 def build_playlist(SERVER_HOST):
@@ -439,19 +439,20 @@ def thread_playlist():
 ############################################################
 
 def obtain_m3u8():
-	global m3u8_playlist
+	global m3u8_playlist, chan_map
 	m3u8_playlist = ''
 	urlstring = M3U8URL
-
+	chan_map = {'0': {}}
 	urlstring = urlstring.split(';')
 	m3u8_number = 0
 	for url in urlstring:
 		m3u8_number+=1
-		m3u8_merger(url, m3u8_number)
+		m3u8_merger(url, str(m3u8_number))
 
 
 		
 def m3u8_merger(url, m3u8_number):
+	global chan_map, m3u8_playlist
 	if url != '':
 		if url.startswith('http'):
 			logger.debug("m3u8 url")
@@ -466,20 +467,34 @@ def m3u8_merger(url, m3u8_number):
 	else:
 		logger.debug("extra m3u8 nothing")
 		return
-	global m3u8_playlist
 	inputm3u8 = [x for x in inputm3u8 if (x != '' and x != '\n')]
 	count = 0
+	chan_map[m3u8_number] = {}
 	for i in range(len(inputm3u8)):
 		if inputm3u8[i] != "" or inputm3u8[i] != "\n":
 			try:
+
 				if inputm3u8[i].startswith("#"):
+					retVal = channelinfo()
 					count+=1
 					grouper = inputm3u8[i]
 					grouper = grouper.split(',')
+					retVal.channame = grouper[1]
+					retVal.epg = find_between(grouper[0], 'tvg-id="', '"')
 					grouper = grouper[0] + ' channel-id="%s" group-title="%s", %s' % (count, m3u8_number, grouper[1])
 					m3u8_playlist += grouper + "\n"
+					retVal.url = inputm3u8[i+1]
+					retVal.channum = count  # int(find_between(meta[0],'channel-id="','"'))
+
+					chan_map['0'][count] = {}
+					chan_map['0'][count] = retVal
+
+					chan_map[m3u8_number][count] = {}
+					chan_map[m3u8_number][count] = retVal
 				else:
 					m3u8_playlist += inputm3u8[i] + "\n"
+
+
 			except:
 				logger.debug("skipped:", inputm3u8[i])
 	# formatted_m3u8 = formatted_m3u8.replace("\n\n","\n")
