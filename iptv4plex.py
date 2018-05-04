@@ -175,7 +175,10 @@ logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 # Console logging
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
+if "-d" in sys.argv:
+	console_handler.setLevel(logging.DEBUG)
+else:
+	console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(log_formatter)
 logger.addHandler(console_handler)
 
@@ -616,9 +619,11 @@ def device(tunerLimit=6, tunerNumber=""):
 # Flask Routes
 ############################################################
 @app.route('/<tuner>/<request_file>')
-def tvh(tuner, request_file):
+def sub_tuners(tuner, request_file):
 	try:
 		t_limit = TUNERLIMITS[int(tuner)-1]
+		if int(tuner) == 0:
+			t_limit = 6
 	except:
 		t_limit = 6
 		logger.info("Setting tuner limits failed, using 6")
@@ -639,7 +644,7 @@ def tvh(tuner, request_file):
 
 
 @app.route('/<request_file>')
-def bridge(request_file):
+def main_tuner(request_file):
 	logger.info("%s was requested by %s" % (request_file, request.environ.get('REMOTE_ADDR')))
 	# return epg
 	if request_file.lower().startswith('epg.'):
@@ -756,7 +761,9 @@ if __name__ == "__main__":
 
 	print("\n##############################################################")
 	print("EPG url is %s/epg.xml" % SERVER_HOST)
-	print("Plex Live TV url is %s" % SERVER_HOST)
+	print("Plex Live TV combined url is %s" % SERVER_HOST)
+	for i in M3U8URL.split(";"):
+		print("Plex Live TV single tuner url for %s is %s/%s" % (i, SERVER_HOST, M3U8URL.split(";").index(i)+1))
 	print("Donations: PayPal to vorghahn.sstv@gmail.com  or BTC - 19qvdk7JYgFruie73jE4VvW7ZJBv8uGtFb")
 	print("##############################################################\n")
 
