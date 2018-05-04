@@ -483,7 +483,7 @@ def m3u8_merger(url, m3u8_number):
 					retVal.epg = find_between(grouper[0], 'tvg-id="', '"')
 					grouper = grouper[0] + ' channel-id="%s" group-title="%s", %s' % (count, m3u8_number, grouper[1])
 					m3u8_playlist += grouper + "\n"
-					retVal.url = inputm3u8[i+1]
+					retVal.url = inputm3u8[i+1].strip()
 					retVal.channum = count  # int(find_between(meta[0],'channel-id="','"'))
 
 					chan_map['0'][count] = {}
