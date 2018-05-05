@@ -233,7 +233,58 @@ if not 'headless' in sys.argv:
 		def client_exit(self, root):
 			root.destroy()
 
+		def addBox(self, frame):
+			# I use len(all_entries) to get number of next free row
+			next_row = len(self.all_m3u8)+4+len(self.all_tuners)+len(self.all_xml)
+
+
+			self.labelM3u8 = tkinter.StringVar()
+			self.labelM3u8.set("m3u8 url")
+			labelM3u8 = tkinter.Label(frame, textvariable=self.labelM3u8, height=2)
+			labelM3u8.grid(row=next_row+1, column=1)
+			#
+			userM3u8 = tkinter.StringVar()
+			userM3u8.set("www.testurl.com/playlist.m3u8")
+			self.m3u8 = tkinter.Entry(frame, textvariable=userM3u8, width=30)
+			self.m3u8.grid(row=next_row+1, column=2)
+
+			self.all_m3u8.append(self.m3u8)
+
+			self.labelTuner = tkinter.StringVar()
+			self.labelTuner.set("Tuner limit")
+			labelTuner = tkinter.Label(frame, textvariable=self.labelTuner, height=2)
+			labelTuner.grid(row=next_row+2, column=1)
+			#
+			userTuner = tkinter.StringVar()
+			userTuner.set("6")
+			self.Tuner = tkinter.Entry(frame, textvariable=userTuner, width=30)
+			self.Tuner.grid(row=next_row+2, column=2)
+
+			self.all_tuners.append(self.Tuner)
+
+			self.labelXml = tkinter.StringVar()
+			self.labelXml.set("xmltv url")
+			labelXml = tkinter.Label(frame, textvariable=self.labelXml, height=2)
+			labelXml.grid(row=next_row+3, column=1)
+			#
+			userXml = tkinter.StringVar()
+			userXml.set("www.testurl.com/epg.xml")
+			self.xml = tkinter.Entry(frame, textvariable=userXml, width=30)
+			self.xml.grid(row=next_row+3, column=2)
+			#
+			self.noteXml = tkinter.StringVar()
+			self.noteXml.set("One xml can serve multiple m3u8s (channels are linked using tvg-id) separate using a ;")
+			noteXml = tkinter.Label(frame, textvariable=self.noteXml, height=2)
+			noteXml.grid(row=next_row+3, column=3)
+
+			self.all_xml.append(self.xml)
+
+		# ------------------------------------
+
 		def __init__(self, master):
+			self.all_m3u8 = []
+			self.all_tuners = []
+			self.all_xml = []
 			tkinter.Frame.__init__(self, master)
 			self.labelText = tkinter.StringVar()
 			self.labelText.set("Initial Setup")
@@ -245,101 +296,61 @@ if not 'headless' in sys.argv:
 			noteText = tkinter.Label(master, textvariable=self.noteText, height=2)
 			noteText.grid(row=1, column=3)
 
-			self.labelM3u8 = tkinter.StringVar()
-			self.labelM3u8.set("m3u8 url(s)")
-			labelM3u8 = tkinter.Label(master, textvariable=self.labelM3u8, height=2)
-			labelM3u8.grid(row=2, column=1)
-			#
-			userM3u8 = tkinter.StringVar()
-			userM3u8.set("www.testurl.com/playlist.m3u8")
-			self.m3u8 = tkinter.Entry(master, textvariable=userM3u8, width=30)
-			self.m3u8.grid(row=2, column=2)
-			#
-			self.noteM3u8 = tkinter.StringVar()
-			self.noteM3u8.set("separate using a ;")
-			noteM3u8 = tkinter.Label(master, textvariable=self.noteM3u8, height=2)
-			noteM3u8.grid(row=2, column=3)
-
-			self.labelTuner = tkinter.StringVar()
-			self.labelTuner.set("Tuner limit(s)")
-			labelTuner = tkinter.Label(master, textvariable=self.labelTuner, height=2)
-			labelTuner.grid(row=3, column=1)
-			#
-			userTuner = tkinter.StringVar()
-			userTuner.set("6")
-			self.Tuner = tkinter.Entry(master, textvariable=userTuner, width=30)
-			self.Tuner.grid(row=3, column=2)
-			#
-			self.noteTuner = tkinter.StringVar()
-			self.noteTuner.set("Number of connections allowed to each m3u8, separate using a ;")
-			noteTuner = tkinter.Label(master, textvariable=self.noteTuner, height=2)
-			noteTuner.grid(row=3, column=3)
-
-			self.labelXml = tkinter.StringVar()
-			self.labelXml.set("xmltv url(s)")
-			labelXml = tkinter.Label(master, textvariable=self.labelXml, height=2)
-			labelXml.grid(row=4, column=1)
-			#
-			userXml = tkinter.StringVar()
-			userXml.set("www.testurl.com/epg.xml")
-			self.xml = tkinter.Entry(master, textvariable=userXml, width=30)
-			self.xml.grid(row=4, column=2)
-			#
-			self.noteXml = tkinter.StringVar()
-			self.noteXml.set("One xml can serve multiple m3u8s (channels are linked using tvg-id) separate using a ;")
-			noteXml = tkinter.Label(master, textvariable=self.noteXml, height=2)
-			noteXml.grid(row=4, column=3)
-
 			self.labelFfmpeg = tkinter.StringVar()
 			self.labelFfmpeg.set("FFMPEG Location")
 			labelFfmpeg = tkinter.Label(master, textvariable=self.labelFfmpeg, height=2)
-			labelFfmpeg.grid(row=5, column=1)
+			labelFfmpeg.grid(row=2, column=1)
 
 			userFfmpeg = tkinter.StringVar()
 			userFfmpeg.set('C:\\ffmpeg\\bin\\ffmpeg.exe')
 			self.ffmpeg = tkinter.Entry(master, textvariable=userFfmpeg, width=30)
-			self.ffmpeg.grid(row=5, column=2)
+			self.ffmpeg.grid(row=2, column=2)
 
 			self.noteFfmpeg = tkinter.StringVar()
 			self.noteFfmpeg.set("Full path to ffmpeg executable")
 			noteFfmpeg = tkinter.Label(master, textvariable=self.noteFfmpeg, height=2)
-			noteFfmpeg.grid(row=5, column=3)
+			noteFfmpeg.grid(row=2, column=3)
 
 			self.labelIP = tkinter.StringVar()
 			self.labelIP.set("Listen IP")
 			labelIP = tkinter.Label(master, textvariable=self.labelIP, height=2)
-			labelIP.grid(row=6, column=1)
+			labelIP.grid(row=3, column=1)
 
 			userIP = tkinter.StringVar()
 			userIP.set(LISTEN_IP)
 			self.ip = tkinter.Entry(master, textvariable=userIP, width=30)
-			self.ip.grid(row=6, column=2)
+			self.ip.grid(row=3, column=2)
 
 			self.noteIP = tkinter.StringVar()
 			self.noteIP.set("If using on other machines then set a static IP and use that.")
 			noteIP = tkinter.Label(master, textvariable=self.noteIP, height=2)
-			noteIP.grid(row=6, column=3)
+			noteIP.grid(row=3, column=3)
 
 			self.labelPort = tkinter.StringVar()
 			self.labelPort.set("Listen Port")
 			labelPort = tkinter.Label(master, textvariable=self.labelPort, height=2)
-			labelPort.grid(row=7, column=1)
+			labelPort.grid(row=4, column=1)
 
 			userPort = tkinter.IntVar()
 			userPort.set(LISTEN_PORT)
 			self.port = tkinter.Entry(master, textvariable=userPort, width=30)
-			self.port.grid(row=7, column=2)
+			self.port.grid(row=4, column=2)
 
 			self.notePort = tkinter.StringVar()
 			self.notePort.set("If 80 doesn't work try 5004 (ports under 1024 require elevation in Unix)")
 			notePort = tkinter.Label(master, textvariable=self.notePort, height=2)
-			notePort.grid(row=7, column=3)
+			notePort.grid(row=4, column=3)
+
+			self.addBox(frame=master)
+
+			addboxButton = tkinter.Button(master, text='Add another source', command=lambda: self.addBox(frame=master))
+			addboxButton.grid(row=99, column=2)
 
 			def gather():
 				config = {}
-				config["m3u8url"] = userM3u8.get()
-				config["tunerlimits"] = userTuner.get()
-				config["xmlurl"] = userXml.get()
+				config["m3u8url"] = ";".join([ent.get() for number, ent in enumerate(self.all_m3u8)])
+				config["tunerlimits"] = ";".join([ent.get() for number, ent in enumerate(self.all_tuners)])
+				config["xmlurl"] = ";".join([ent.get() for number, ent in enumerate(self.all_xml)])
 				config["ffmpegloc"] = userFfmpeg.get()
 				config["ip"] = userIP.get()
 				config["port"] = userPort.get()
@@ -363,7 +374,8 @@ if not 'headless' in sys.argv:
 				button1.grid(row=1)
 
 			button1 = tkinter.Button(master, text="Submit", width=20, command=lambda: gather())
-			button1.grid(row=8, column=2)
+			button1.grid(row=100, column=2)
+
 
 ############################################################
 # MISC Functions
@@ -524,7 +536,8 @@ def obtain_epg():
 	f.close()
 	list_of_xmltv = XMLURL.split(';')
 	for i in list_of_xmltv:
-		xmltv_merger(i)
+		if i != '' and i != 'www.testurl.com/epg.xml':
+			xmltv_merger(i)
 
 def xmltv_merger(xml_url):
 	#todo download each xmltv
