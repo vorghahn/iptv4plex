@@ -18,6 +18,7 @@ import subprocess
 import time
 import ntpath
 import requests as req
+import pickle
 
 
 try:
@@ -75,6 +76,7 @@ class channelinfo:
 	channame = ""
 	url = ""
 	active = True
+	icon = ""
 
 
 ############################################################
@@ -178,7 +180,7 @@ console_handler = logging.StreamHandler()
 if "-d" in sys.argv:
 	console_handler.setLevel(logging.DEBUG)
 else:
-	console_handler.setLevel(logging.INFO)
+	console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(log_formatter)
 logger.addHandler(console_handler)
 
@@ -455,18 +457,27 @@ def thread_playlist():
 
 def obtain_m3u8():
 	global m3u8_playlist, chan_map
+	try:
+		with open('./cache/channels.json', 'rb') as f:
+			chan_map = pickle.load(f)
+	except:
+		print('archive failed')
+		chan_map = {'0': {}}
 	m3u8_playlist = ''
 	urlstring = M3U8URL
-	chan_map = {'0': {}}
+	temp_chan_map = {'0': {}}
 	urlstring = urlstring.split(';')
 	m3u8_number = 0
 	for url in urlstring:
 		m3u8_number+=1
-		m3u8_merger(url, str(m3u8_number))
+		m3u8_merger(url, str(m3u8_number), temp_chan_map)
+	chan_map = temp_chan_map
+	with open('./cache/channels.json', 'wb') as f:
+		pickle.dump(chan_map, f)
 
 
 		
-def m3u8_merger(url, m3u8_number):
+def m3u8_merger(url, m3u8_number, temp_chan_map):
 	global chan_map, m3u8_playlist
 	if url != '':
 		if url.startswith('http'):
@@ -484,34 +495,41 @@ def m3u8_merger(url, m3u8_number):
 		return
 	inputm3u8 = [x for x in inputm3u8 if (x != '' and x != '\n')]
 	count = 0
-	chan_map[m3u8_number] = {}
+	temp_chan_map[m3u8_number] = {}
 	for i in range(len(inputm3u8)):
 		if inputm3u8[i] != "" or inputm3u8[i] != "\n":
-			try:
+			# try:
+			if inputm3u8[i].startswith("#"):
+				retVal = channelinfo()
+				count+=1
+				grouper = inputm3u8[i]
+				grouper = grouper.split(',')
+				retVal.channame = grouper[1]
+				retVal.epg = find_between(grouper[0], 'tvg-id="', '"')
+				retVal.icon = find_between(grouper[0],'tvg-logo="','"')
 
-				if inputm3u8[i].startswith("#"):
-					retVal = channelinfo()
-					count+=1
-					grouper = inputm3u8[i]
-					grouper = grouper.split(',')
-					retVal.channame = grouper[1]
-					retVal.epg = find_between(grouper[0], 'tvg-id="', '"')
-					grouper = grouper[0] + ' channel-id="%s" group-title="%s", %s' % (count, m3u8_number, grouper[1])
-					m3u8_playlist += grouper + "\n"
-					retVal.url = inputm3u8[i+1].strip()
-					retVal.channum = count  # int(find_between(meta[0],'channel-id="','"'))
+				grouper = grouper[0] + ' channel-id="%s" group-title="%s", %s' % (count, m3u8_number, grouper[1])
+				m3u8_playlist += grouper + "\n"
+				retVal.url = inputm3u8[i+1].strip()
+				retVal.channum = count  # int(find_between(meta[0],'channel-id="','"'))
+				retVal.active = True
+				for value in chan_map['0'].values():
+					if value.epg == retVal.epg:
+						retVal.active = value.active
+						if not retVal.active:
+							logger.debug('Channel %s/%s is disabled by user.' % (retVal.channum, retVal.channame))
+						break
+				temp_chan_map['0'][count] = {}
+				temp_chan_map['0'][count] = retVal
 
-					chan_map['0'][count] = {}
-					chan_map['0'][count] = retVal
-
-					chan_map[m3u8_number][count] = {}
-					chan_map[m3u8_number][count] = retVal
-				else:
-					m3u8_playlist += inputm3u8[i] + "\n"
+				temp_chan_map[m3u8_number][count] = {}
+				temp_chan_map[m3u8_number][count] = retVal
+			else:
+				m3u8_playlist += inputm3u8[i] + "\n"
 
 
-			except:
-				logger.debug("skipped:", inputm3u8[i])
+			# except:
+			# 	logger.debug("skipped:", inputm3u8[i])
 	# formatted_m3u8 = formatted_m3u8.replace("\n\n","\n")
 
 
@@ -601,10 +619,11 @@ def lineup(tuner='0'):
 	for c in chan_map[tuner]:
 		template = "{0}/auto/v{1}"
 		url = template.format(SERVER_HOST, chan_map[tuner][c].channum)
-		lineup.append({'GuideNumber': str(chan_map[tuner][c].channum),
-					   'GuideName': chan_map[tuner][c].channame,
-					   'URL': url
-					   })
+		if chan_map[tuner][c].active:
+			lineup.append({'GuideNumber': str(chan_map[tuner][c].channum),
+						   'GuideName': chan_map[tuner][c].channame,
+						   'URL': url
+						   })
 
 	return jsonify(lineup)
 
@@ -627,6 +646,44 @@ def device(tunerLimit=6, tunerNumber=""):
 	}
 	return render_template('device.xml', data=discoverData), {'Content-Type': 'application/xml'}
 
+
+############################################################
+# Html
+############################################################
+
+
+# Change this to change the style of the web page generated
+style = """
+<style type="text/css">
+	body { background: white url("https://guide.smoothstreams.tv/assets/images/channels/150.png") no-repeat fixed center center; background-size: 500px 500px; color: black; }
+	h1 { color: white; background-color: black; padding: 0.5ex }
+	h2 { color: white; background-color: black; padding: 0.3ex }
+	.container {display: table; width: 100%;}
+	.left-half {position: absolute;  left: 0px;  width: 50%;}
+	.right-half {position: absolute;  right: 0px;  width: 50%;}
+</style>
+"""
+
+
+def create_menu():
+	footer = '<p>Donations: PayPal to vorghahn.sstv@gmail.com  or BTC - 19qvdk7JYgFruie73jE4VvW7ZJBv8uGtFb</p>'
+
+	with open("./cache/channels.html", "w") as html:
+		global chan_map
+		html.write("""<html><head><title>iptv4plex</title><meta charset="UTF-8">%s</head><body>\n""" % (style,))
+		html.write("<h1>Channel List</h1>")
+		html.write('<section class="container"><div class="left-half"><form action="/channels.html" method="post"><table width="300" border="1"><tr><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th></tr>')
+		template = "<td>{0}</td><td> <input type='checkbox' name='{1}' {4}><br></td><td><a href='{2}'><img src='{3}'></a></td></td>"
+		for i in chan_map['0']:
+			if i%5 == 1:
+				html.write("<tr>")
+			html.write(template.format(chan_map['0'][i].channum, chan_map['0'][i].channum, chan_map['0'][i].url,chan_map['0'][i].icon, 'checked' if chan_map['0'][i].active else ''))
+			if i%5 == 0:
+				html.write("</tr>")
+		html.write("</table><input type='submit' value='Submit'></form>")
+		html.write("</br>%s</div>" % footer)
+		html.write("</section>")
+		html.write("</body></html>\n")
 
 ############################################################
 # Flask Routes
@@ -656,7 +713,7 @@ def sub_tuners(tuner, request_file):
 		abort(404, "Unknown request")
 
 
-@app.route('/<request_file>')
+@app.route('/<request_file>', methods=['GET','POST'])
 def main_tuner(request_file):
 	logger.info("%s was requested by %s" % (request_file, request.environ.get('REMOTE_ADDR')))
 	# return epg
@@ -682,6 +739,20 @@ def main_tuner(request_file):
 		logger.info("All channels playlist was requested by %s", request.environ.get('REMOTE_ADDR'))
 		output = '#EXTM3U\n' + m3u8_playlist
 		return Response(output, mimetype='application/x-mpegURL')
+
+	elif request_file.lower() == 'channels.html':
+		if request.form:
+			global chan_map
+			inc_data = request.form
+			for channel in chan_map['0']:
+				if str(channel) not in inc_data:
+					chan_map['0'][channel].active = False
+				else:
+					chan_map['0'][channel].active = True
+			with open('./cache/channels.json', 'wb') as f:
+				pickle.dump(chan_map, f)
+		create_menu()
+		return send_from_directory('./cache','channels.html')
 
 	# HDHomeRun emulated json files for Plex Live tv.
 	elif request_file.lower() == 'lineup_status.json':
@@ -779,7 +850,7 @@ if __name__ == "__main__":
 		print("Plex Live TV single tuner url for %s is %s/%s" % (i, SERVER_HOST, M3U8URL.split(";").index(i)+1))
 	print("Donations: PayPal to vorghahn.sstv@gmail.com  or BTC - 19qvdk7JYgFruie73jE4VvW7ZJBv8uGtFb")
 	print("##############################################################\n")
-
+	create_menu()
 	if __version__ < latest_ver:
 		logger.info(
 			"Your version (%s%s) is out of date, the latest is %s, which has now be downloaded for you into the 'updates' subdirectory." % (
