@@ -67,7 +67,8 @@ latest_ver = float(json.loads(requests.urlopen(url).read().decode('utf-8'))['Ver
 
 
 m3u8_playlist = ""
-
+group_list = {}
+language_list = {'en':True}
 
 class channelinfo:
 	epg = ""
@@ -77,6 +78,9 @@ class channelinfo:
 	url = ""
 	active = True
 	icon = ""
+	group = ''
+	playlist = ''
+	language = 'en'
 
 
 ############################################################
@@ -456,7 +460,7 @@ def thread_playlist():
 ############################################################
 
 def obtain_m3u8():
-	global m3u8_playlist, chan_map
+	global m3u8_playlist, chan_map, temp_chan_map
 	try:
 		with open('./cache/channels.json', 'rb') as f:
 			chan_map = pickle.load(f)
@@ -470,15 +474,15 @@ def obtain_m3u8():
 	m3u8_number = 0
 	for url in urlstring:
 		m3u8_number+=1
-		m3u8_merger(url, str(m3u8_number), temp_chan_map)
+		m3u8_merger(url, str(m3u8_number))
 	chan_map = temp_chan_map
 	with open('./cache/channels.json', 'wb') as f:
 		pickle.dump(chan_map, f)
 
 
 		
-def m3u8_merger(url, m3u8_number, temp_chan_map):
-	global chan_map, m3u8_playlist
+def m3u8_merger(url, m3u8_number):
+	global chan_map, m3u8_playlist, group_list, temp_chan_map
 	if url != '':
 		if url.startswith('http'):
 			logger.debug("m3u8 url")
@@ -494,7 +498,7 @@ def m3u8_merger(url, m3u8_number, temp_chan_map):
 		logger.debug("extra m3u8 nothing")
 		return
 	inputm3u8 = [x for x in inputm3u8 if (x != '' and x != '\n')]
-	count = 0
+	count = len(temp_chan_map['0'])
 	temp_chan_map[m3u8_number] = {}
 	for i in range(len(inputm3u8)):
 		if inputm3u8[i] != "" or inputm3u8[i] != "\n":
@@ -507,8 +511,16 @@ def m3u8_merger(url, m3u8_number, temp_chan_map):
 				retVal.channame = grouper[1]
 				retVal.epg = find_between(grouper[0], 'tvg-id="', '"')
 				retVal.icon = find_between(grouper[0],'tvg-logo="','"')
+				retVal.group = find_between(grouper[0],'group-title="','"')
+				if not retVal.group.lower() in group_list:
+					group_list[retVal.group.lower()] = True
+				retVal.language = find_between(grouper[0],'language="','"')
+				if not retVal.language.lower() in language_list and retVal.language != '':
+					language_list[retVal.language.lower()] = True
+					print(m3u8_number,retVal.channame)
+				retVal.playlist = m3u8_number
+				grouper = grouper[0] + ' channel-id="%s", %s' % (count, grouper[1])
 
-				grouper = grouper[0] + ' channel-id="%s" group-title="%s", %s' % (count, m3u8_number, grouper[1])
 				m3u8_playlist += grouper + "\n"
 				retVal.url = inputm3u8[i+1].strip()
 				retVal.channum = count  # int(find_between(meta[0],'channel-id="','"'))
@@ -655,7 +667,7 @@ def device(tunerLimit=6, tunerNumber=""):
 # Change this to change the style of the web page generated
 style = """
 <style type="text/css">
-	body { background: white url("https://guide.smoothstreams.tv/assets/images/channels/150.png") no-repeat fixed center center; background-size: 500px 500px; color: black; }
+	body { background: white url("") no-repeat fixed center center; background-size: 500px 500px; color: black; }
 	h1 { color: white; background-color: black; padding: 0.5ex }
 	h2 { color: white; background-color: black; padding: 0.3ex }
 	.container {display: table; width: 100%;}
@@ -671,14 +683,32 @@ def create_menu():
 	with open("./cache/channels.html", "w") as html:
 		global chan_map
 		html.write("""<html><head><title>iptv4plex</title><meta charset="UTF-8">%s</head><body>\n""" % (style,))
+		html.write('<form action = "/channels.html" method = "post"><input type="submit" name="reset" value="Reset channel settings" /></form>')
+		html.write('<section class="container"><h1>Group List</h1><div><form action="/channels.html" method="post"><table width="300" border="1"><tr><th>Active</th><th>Group</th></tr>')
+		template = "<td> <input type='checkbox' name='group' value='{0}'{1}></td><td>{0}<br></td>"
+		for group in group_list:
+			html.write("<tr>")
+			html.write(template.format(group.capitalize(), 'checked' if group_list[group] else ''))
+			html.write("</tr>")
+		html.write("</table><input type='submit' value='Submit'></form>")
+		html.write("</div>")
+		if len(language_list) > 1:
+			html.write('<h1>Language List</h1><div><form action="/channels.html" method="post"><table width="300" border="1"><tr><th>Active</th><th>Language</th></tr>')
+			template = "<td> <input type='checkbox' name='language' value='{0}'{1}></td><td>{0}<br></td>"
+			for language in language_list:
+				html.write("<tr>")
+				html.write(template.format(language.capitalize(), 'checked' if language_list[language] else ''))
+				html.write("</tr>")
+			html.write("</table><input type='submit' value='Submit'></form>")
+			html.write("</div>")
 		html.write("<h1>Channel List</h1>")
-		html.write('<section class="container"><div class="left-half"><form action="/channels.html" method="post"><table width="300" border="1"><tr><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th></tr>')
-		template = "<td>{0}</td><td> <input type='checkbox' name='{1}' {4}><br></td><td><a href='{2}'><img src='{3}'></a></td></td>"
+		html.write('<div><form action="/channels.html" method="post"><table width="300" border="1"><tr><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th></tr>')
+		template = "<td>{0}</td><td> <input type='checkbox' name='channel' value='{1}' {4}><br></td><td><a href='{2}'><img src='{3}' height='83' width='270'></a></td></td>"
 		for i in chan_map['0']:
-			if i%5 == 1:
+			if i%3 == 1:
 				html.write("<tr>")
 			html.write(template.format(chan_map['0'][i].channum, chan_map['0'][i].channum, chan_map['0'][i].url,chan_map['0'][i].icon, 'checked' if chan_map['0'][i].active else ''))
-			if i%5 == 0:
+			if i%3 == 0:
 				html.write("</tr>")
 		html.write("</table><input type='submit' value='Submit'></form>")
 		html.write("</br>%s</div>" % footer)
@@ -743,12 +773,32 @@ def main_tuner(request_file):
 	elif request_file.lower() == 'channels.html':
 		if request.form:
 			global chan_map
-			inc_data = request.form
+			inc_data = dict(request.form)
+
 			for channel in chan_map['0']:
-				if str(channel) not in inc_data:
+				if ('channel' in inc_data and str(channel) not in inc_data['channel']) or ('group' in inc_data and chan_map['0'][channel].group.capitalize() not in inc_data['group']) or ('language' in inc_data and chan_map['0'][channel].language.capitalize() not in inc_data['language']):
 					chan_map['0'][channel].active = False
+					logger.debug("disabling: %s" % channel)
 				else:
 					chan_map['0'][channel].active = True
+			if 'group' in inc_data:
+				for grp in group_list:
+					if grp.capitalize() not in inc_data['group']:
+						group_list[grp] = False
+			if 'language' in inc_data:
+				print(language_list)
+				for lang in language_list:
+					print(lang)
+					if lang.capitalize() not in inc_data['language']:
+						language_list[lang] = False
+			if 'reset' in inc_data:
+				for channel in chan_map['0']:
+					chan_map['0'][channel].active = True
+				for grp in group_list:
+					group_list[grp] = True
+				for lang in language_list:
+					language_list[lang] = True
+
 			with open('./cache/channels.json', 'wb') as f:
 				pickle.dump(chan_map, f)
 		create_menu()
@@ -850,7 +900,7 @@ if __name__ == "__main__":
 		print("Plex Live TV single tuner url for %s is %s/%s" % (i, SERVER_HOST, M3U8URL.split(";").index(i)+1))
 	print("Donations: PayPal to vorghahn.sstv@gmail.com  or BTC - 19qvdk7JYgFruie73jE4VvW7ZJBv8uGtFb")
 	print("##############################################################\n")
-	create_menu()
+
 	if __version__ < latest_ver:
 		logger.info(
 			"Your version (%s%s) is out of date, the latest is %s, which has now be downloaded for you into the 'updates' subdirectory." % (
