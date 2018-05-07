@@ -739,7 +739,7 @@ def sub_tuners(tuner, request_file):
 	elif request_file.lower() == 'device.xml':
 		return device(t_limit,tuner)
 	else:
-		logger.info("Unknown requested %r by %s", request_file, request.environ.get('REMOTE_ADDR'))
+		logger.info("Unknown requested %s/%s by %s (tuner 404)", tuner, request_file, request.environ.get('REMOTE_ADDR'))
 		abort(404, "Unknown request")
 
 
@@ -764,8 +764,8 @@ def main_tuner(request_file):
 		#xmltv_merger()
 		#return send_from_directory(os.path.join(os.path.dirname(sys.argv[0]), 'cache'), 'combined.xml')
 	elif request_file.lower() == 'favicon.ico':
-		return ''
-	
+		return redirect("https://assets.materialup.com/uploads/57194301-5bfe-4b2c-9f17-1c1de930c496/avatar.png", 302)
+
 	elif request_file.lower() == 'playlist.m3u8':
 		obtain_m3u8()
 		logger.info("All channels playlist was requested by %s", request.environ.get('REMOTE_ADDR'))
@@ -788,7 +788,6 @@ def main_tuner(request_file):
 					if grp.capitalize() not in inc_data['group']:
 						group_list[grp] = False
 			if 'language' in inc_data:
-				print(language_list)
 				for lang in language_list:
 					print(lang)
 					if lang.capitalize() not in inc_data['language']:
@@ -818,7 +817,7 @@ def main_tuner(request_file):
 	elif request_file.lower() == 'device.xml':
 		return device()
 	else:
-		logger.info("Unknown requested %r by %s", request_file, request.environ.get('REMOTE_ADDR'))
+		logger.info("Unknown requested %r by %s (main 404)", request_file, request.environ.get('REMOTE_ADDR'))
 		abort(404, "Unknown request")
 
 @app.route('/auto/<request_file>')
