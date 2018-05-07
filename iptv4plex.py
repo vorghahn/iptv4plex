@@ -414,28 +414,9 @@ def thread_updater():
 ############################################################
 
 def build_channel_map():
-	#todo parses merged m3u8s into a chan_map dict for later use.
-	# chan_map = {'0':{}}
 	obtain_m3u8()
 	logger.debug("Loading channel list")
-	# split = [x for x in m3u8_playlist.split("\n") if x != ""]
-	# for i in range(0,len(split),2):
-	# 	count = len(chan_map['0'])+1
-	# 	# print(i)
-	# 	retVal = channelinfo()
-	# 	meta = split[i].split(',')
-	# 	retVal.channame = meta[1][1:]
-	# 	retVal.channum = count #int(find_between(meta[0],'channel-id="','"'))
-	# 	retVal.epg = find_between(meta[0],'tvg-id="','"')
-	# 	m3u8 = find_between(meta[0],'group-title="','"')
-	# 	retVal.url = split[i+1].strip()
-	# 	chan_map['0'][count] = {}
-	# 	chan_map['0'][count] = retVal
-	# 	if not m3u8 in chan_map:
-	# 		chan_map[m3u8] = {}
-	# 	chan_map[m3u8][count] = {}
-	# 	chan_map[m3u8][count] = retVal
-	return chan_map
+	return
 
 def build_playlist(SERVER_HOST):
 	return True
@@ -703,11 +684,11 @@ def create_menu():
 			html.write("</div>")
 		html.write("<h1>Channel List</h1>")
 		html.write('<div><form action="/channels.html" method="post"><table width="300" border="1"><tr><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th><th>#</th><th>Active</th><th>Icon</th></tr>')
-		template = "<td>{0}</td><td> <input type='checkbox' name='channel' value='{1}' {4}><br></td><td><a href='{2}'><img src='{3}' height='83' width='270'></a></td></td>"
+		template = "<td>{0}</td><td> <input type='checkbox' name='channel' value='{1}' {5}><br></td><td><a href='{2}'><img src='{3}' height='83' width='270' alt='{4}'></a></td></td>"
 		for i in chan_map['0']:
 			if i%3 == 1:
 				html.write("<tr>")
-			html.write(template.format(chan_map['0'][i].channum, chan_map['0'][i].channum, chan_map['0'][i].url,chan_map['0'][i].icon, 'checked' if chan_map['0'][i].active else ''))
+			html.write(template.format(chan_map['0'][i].channum, chan_map['0'][i].channum, chan_map['0'][i].url,chan_map['0'][i].icon, chan_map['0'][i].channame, 'checked' if chan_map['0'][i].active else ''))
 			if i%3 == 0:
 				html.write("</tr>")
 		html.write("</table><input type='submit' value='Submit'></form>")
@@ -742,6 +723,43 @@ def sub_tuners(tuner, request_file):
 		logger.info("Unknown requested %s/%s by %s (tuner 404)", tuner, request_file, request.environ.get('REMOTE_ADDR'))
 		abort(404, "Unknown request")
 
+# web page
+@app.route('/', methods=['GET','POST'])
+@app.route('/channels.html', methods=['GET','POST'])
+def web_page():
+	if request.form:
+		global chan_map
+		inc_data = dict(request.form)
+
+		for playlist in chan_map:
+			for channel in chan_map[playlist]:
+				if ('channel' in inc_data and str(channel) not in inc_data['channel']) or ('group' in inc_data and chan_map[playlist][channel].group.capitalize() not in inc_data['group']) or ('language' in inc_data and chan_map[playlist][channel].language.capitalize() not in inc_data['language']):
+					chan_map[playlist][channel].active = False
+					logger.debug("disabling: %s" % channel)
+				else:
+					chan_map[playlist][channel].active = True
+		if 'group' in inc_data:
+			for grp in group_list:
+				if grp.capitalize() not in inc_data['group']:
+					group_list[grp] = False
+		if 'language' in inc_data:
+			for lang in language_list:
+				print(lang)
+				if lang.capitalize() not in inc_data['language']:
+					language_list[lang] = False
+		if 'reset' in inc_data:
+			for playlist in chan_map:
+				for channel in chan_map[playlist]:
+					chan_map[playlist][channel].active = True
+			for grp in group_list:
+				group_list[grp] = True
+			for lang in language_list:
+				language_list[lang] = True
+
+		with open('./cache/channels.json', 'wb') as f:
+			pickle.dump(chan_map, f)
+	create_menu()
+	return send_from_directory('./cache','channels.html')
 
 @app.route('/<request_file>', methods=['GET','POST'])
 def main_tuner(request_file):
@@ -763,6 +781,8 @@ def main_tuner(request_file):
 
 		#xmltv_merger()
 		#return send_from_directory(os.path.join(os.path.dirname(sys.argv[0]), 'cache'), 'combined.xml')
+
+	# Icon for the favourites menu and browser tab
 	elif request_file.lower() == 'favicon.ico':
 		return redirect("https://assets.materialup.com/uploads/57194301-5bfe-4b2c-9f17-1c1de930c496/avatar.png", 302)
 
@@ -772,38 +792,7 @@ def main_tuner(request_file):
 		output = '#EXTM3U\n' + m3u8_playlist
 		return Response(output, mimetype='application/x-mpegURL')
 
-	elif request_file.lower() == 'channels.html':
-		if request.form:
-			global chan_map
-			inc_data = dict(request.form)
 
-			for channel in chan_map['0']:
-				if ('channel' in inc_data and str(channel) not in inc_data['channel']) or ('group' in inc_data and chan_map['0'][channel].group.capitalize() not in inc_data['group']) or ('language' in inc_data and chan_map['0'][channel].language.capitalize() not in inc_data['language']):
-					chan_map['0'][channel].active = False
-					logger.debug("disabling: %s" % channel)
-				else:
-					chan_map['0'][channel].active = True
-			if 'group' in inc_data:
-				for grp in group_list:
-					if grp.capitalize() not in inc_data['group']:
-						group_list[grp] = False
-			if 'language' in inc_data:
-				for lang in language_list:
-					print(lang)
-					if lang.capitalize() not in inc_data['language']:
-						language_list[lang] = False
-			if 'reset' in inc_data:
-				for channel in chan_map['0']:
-					chan_map['0'][channel].active = True
-				for grp in group_list:
-					group_list[grp] = True
-				for lang in language_list:
-					language_list[lang] = True
-
-			with open('./cache/channels.json', 'wb') as f:
-				pickle.dump(chan_map, f)
-		create_menu()
-		return send_from_directory('./cache','channels.html')
 
 	# HDHomeRun emulated json files for Plex Live tv.
 	elif request_file.lower() == 'lineup_status.json':
@@ -882,8 +871,7 @@ if __name__ == "__main__":
 	logger.info("Building initial playlist...")
 	try:
 		obtain_epg()
-		global chan_map
-		chan_map = build_channel_map()
+		build_channel_map()
 
 	except:
 		logger.exception("Exception while building initial playlist: ")
@@ -895,6 +883,7 @@ if __name__ == "__main__":
 		_thread.start_new_thread(thread_playlist, ())
 
 	print("\n##############################################################")
+	print("Channels menu is %s" % SERVER_HOST)
 	print("EPG url is %s/epg.xml" % SERVER_HOST)
 	print("Plex Live TV combined url is %s" % SERVER_HOST)
 	for i in M3U8URL.split(";"):
