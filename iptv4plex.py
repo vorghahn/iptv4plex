@@ -184,7 +184,7 @@ console_handler = logging.StreamHandler()
 if "-d" in sys.argv:
 	console_handler.setLevel(logging.DEBUG)
 else:
-	console_handler.setLevel(logging.DEBUG)
+	console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(log_formatter)
 logger.addHandler(console_handler)
 
@@ -763,7 +763,9 @@ def main_tuner(request_file):
 
 		#xmltv_merger()
 		#return send_from_directory(os.path.join(os.path.dirname(sys.argv[0]), 'cache'), 'combined.xml')
-
+	elif request_file.lower() == 'favicon.ico':
+		return ''
+	
 	elif request_file.lower() == 'playlist.m3u8':
 		obtain_m3u8()
 		logger.info("All channels playlist was requested by %s", request.environ.get('REMOTE_ADDR'))
