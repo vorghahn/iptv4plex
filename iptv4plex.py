@@ -41,15 +41,11 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.2
+__version__ = 0.1
 # Changelog
-# 0.2 - Added tunerlimits and subnets for each m3u8 eg ip:port/1/ the original ip:port/ will return them all merged still
-# 0.1 - Initial testing release
+# 0.1 - Initial public release
 
 
-opener = requests.build_opener()
-opener.addheaders = [('User-agent', 'YAP - %s - %s - %s' % (sys.argv[0], platform.system(), str(__version__)))]
-requests.install_opener(opener)
 type = ""
 latestfile = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/iptv4plex.py"
 if not sys.argv[0].endswith('.py'):
@@ -121,7 +117,7 @@ def load_settings():
 		with open(os.path.join(os.path.dirname(sys.argv[0]), 'proxysettings.json')) as jsonConfig:
 			config = {}
 			config = load(jsonConfig)
-			if "ffmpegloc" in config:
+			if "ffmpegloc" in config and platform.system() == 'Windows':
 				FFMPEGLOC = config["ffmpegloc"]
 			if "m3u8url" in config:
 				M3U8URL = config["m3u8url"]
@@ -141,8 +137,9 @@ def load_settings():
 			config["ip"] = input("Listening IP address?(ie recommend 127.0.0.1 for beginners)")
 			config["port"] = int(input("and port?(ie 6969, Unix require elevation for a number greater than 1024)"))
 			os.system('cls' if os.name == 'nt' else 'clear')
-			config["ffmpegloc"] = input("FFMPEG install location (full path to ffmpeg executable)") #todo os.walk detection
-			os.system('cls' if os.name == 'nt' else 'clear')
+			if platform.system() == 'Windows':
+				config["ffmpegloc"] = input("FFMPEG install location (full path to ffmpeg executable)") #todo os.walk detection
+				os.system('cls' if os.name == 'nt' else 'clear')
 			config["m3u8url"] = input("Copy paste in m3u8 URL, seperate multiple using ;")
 			os.system('cls' if os.name == 'nt' else 'clear')
 			config["tunerlimits"] = input("Enter the maximum number of connections each m3u8 allows (same order as m3u8 was entered), seperate multiple using ;")
@@ -153,7 +150,8 @@ def load_settings():
 			SERVER_HOST = "http://" + LISTEN_IP + ":" + str(LISTEN_PORT)
 			XMLURL = config["xmlurl"]
 			M3U8URL = config["m3u8url"]
-			FFMPEGLOC = config["ffmpegloc"]
+			if platform.system() == 'Windows':
+				FFMPEGLOC = config["ffmpegloc"]
 			TUNERLIMITS = config["tunerlimits"].split(';')
 			with open(os.path.join(os.path.dirname(sys.argv[0]), 'proxysettings.json'), 'w') as fp:
 				dump(config, fp)
@@ -302,20 +300,21 @@ if not 'headless' in sys.argv:
 			noteText = tkinter.Label(master, textvariable=self.noteText, height=2)
 			noteText.grid(row=1, column=3)
 
-			self.labelFfmpeg = tkinter.StringVar()
-			self.labelFfmpeg.set("FFMPEG Location")
-			labelFfmpeg = tkinter.Label(master, textvariable=self.labelFfmpeg, height=2)
-			labelFfmpeg.grid(row=2, column=1)
+			if platform.system() == 'Windows':
+				self.labelFfmpeg = tkinter.StringVar()
+				self.labelFfmpeg.set("FFMPEG Location")
+				labelFfmpeg = tkinter.Label(master, textvariable=self.labelFfmpeg, height=2)
+				labelFfmpeg.grid(row=2, column=1)
 
-			userFfmpeg = tkinter.StringVar()
-			userFfmpeg.set('C:\\ffmpeg\\bin\\ffmpeg.exe')
-			self.ffmpeg = tkinter.Entry(master, textvariable=userFfmpeg, width=30)
-			self.ffmpeg.grid(row=2, column=2)
+				userFfmpeg = tkinter.StringVar()
+				userFfmpeg.set('C:\\ffmpeg\\bin\\ffmpeg.exe')
+				self.ffmpeg = tkinter.Entry(master, textvariable=userFfmpeg, width=30)
+				self.ffmpeg.grid(row=2, column=2)
 
-			self.noteFfmpeg = tkinter.StringVar()
-			self.noteFfmpeg.set("Full path to ffmpeg executable")
-			noteFfmpeg = tkinter.Label(master, textvariable=self.noteFfmpeg, height=2)
-			noteFfmpeg.grid(row=2, column=3)
+				self.noteFfmpeg = tkinter.StringVar()
+				self.noteFfmpeg.set("Full path to ffmpeg executable")
+				noteFfmpeg = tkinter.Label(master, textvariable=self.noteFfmpeg, height=2)
+				noteFfmpeg.grid(row=2, column=3)
 
 			self.labelIP = tkinter.StringVar()
 			self.labelIP.set("Listen IP")
@@ -357,7 +356,8 @@ if not 'headless' in sys.argv:
 				config["m3u8url"] = ";".join([ent.get() for number, ent in enumerate(self.all_m3u8)])
 				config["tunerlimits"] = ";".join([ent.get() for number, ent in enumerate(self.all_tuners)])
 				config["xmlurl"] = ";".join([ent.get() for number, ent in enumerate(self.all_xml)])
-				config["ffmpegloc"] = userFfmpeg.get()
+				if platform.system() == 'Windows':
+					config["ffmpegloc"] = userFfmpeg.get()
 				config["ip"] = userIP.get()
 				config["port"] = userPort.get()
 				for widget in master.winfo_children():
@@ -371,7 +371,8 @@ if not 'headless' in sys.argv:
 				SERVER_HOST = "http://" + LISTEN_IP + ":" + str(LISTEN_PORT)
 				XMLURL = config["xmlurl"]
 				M3U8URL = config["m3u8url"]
-				FFMPEGLOC = config["ffmpegloc"]
+				if platform.system() == 'Windows':
+					FFMPEGLOC = config["ffmpegloc"]
 				TUNERLIMITS = config["tunerlimits"].split(';')
 
 
