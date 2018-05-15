@@ -41,8 +41,9 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.1
+__version__ = 0.11
 # Changelog
+# 0.11 - Changed archive failed print to a debug log. Reenabled try/except for m3u8 parsing.
 # 0.1 - Initial public release
 
 
@@ -447,7 +448,7 @@ def obtain_m3u8():
 		with open('./cache/channels.json', 'rb') as f:
 			chan_map = pickle.load(f)
 	except:
-		print('archive failed')
+		logger.debug('Loading of archive failed')
 		chan_map = {'0': {}}
 	m3u8_playlist = ''
 	urlstring = M3U8URL
@@ -484,46 +485,46 @@ def m3u8_merger(url, m3u8_number):
 	temp_chan_map[m3u8_number] = {}
 	for i in range(len(inputm3u8)):
 		if inputm3u8[i] != "" or inputm3u8[i] != "\n":
-			# try:
-			if inputm3u8[i].startswith("#"):
-				retVal = channelinfo()
-				count+=1
-				grouper = inputm3u8[i]
-				grouper = grouper.split(',')
-				retVal.channame = grouper[1]
-				retVal.epg = find_between(grouper[0], 'tvg-id="', '"')
-				retVal.icon = find_between(grouper[0],'tvg-logo="','"')
-				retVal.group = find_between(grouper[0],'group-title="','"')
-				if not retVal.group.lower() in group_list:
-					group_list[retVal.group.lower()] = True
-				retVal.language = find_between(grouper[0],'language="','"')
-				if not retVal.language.lower() in language_list and retVal.language != '':
-					language_list[retVal.language.lower()] = True
-					print(m3u8_number,retVal.channame)
-				retVal.playlist = m3u8_number
-				grouper = grouper[0] + ' channel-id="%s", %s' % (count, grouper[1])
+			try:
+				if inputm3u8[i].startswith("#"):
+					retVal = channelinfo()
+					count+=1
+					grouper = inputm3u8[i]
+					grouper = grouper.split(',')
+					retVal.channame = grouper[1]
+					retVal.epg = find_between(grouper[0], 'tvg-id="', '"')
+					retVal.icon = find_between(grouper[0],'tvg-logo="','"')
+					retVal.group = find_between(grouper[0],'group-title="','"')
+					if not retVal.group.lower() in group_list:
+						group_list[retVal.group.lower()] = True
+					retVal.language = find_between(grouper[0],'language="','"')
+					if not retVal.language.lower() in language_list and retVal.language != '':
+						language_list[retVal.language.lower()] = True
+						print(m3u8_number,retVal.channame)
+					retVal.playlist = m3u8_number
+					grouper = grouper[0] + ' channel-id="%s", %s' % (count, grouper[1])
 
-				m3u8_playlist += grouper + "\n"
-				retVal.url = inputm3u8[i+1].strip()
-				retVal.channum = count  # int(find_between(meta[0],'channel-id="','"'))
-				retVal.active = True
-				for value in chan_map['0'].values():
-					if value.epg == retVal.epg:
-						retVal.active = value.active
-						if not retVal.active:
-							logger.debug('Channel %s/%s is disabled by user.' % (retVal.channum, retVal.channame))
-						break
-				temp_chan_map['0'][count] = {}
-				temp_chan_map['0'][count] = retVal
+					m3u8_playlist += grouper + "\n"
+					retVal.url = inputm3u8[i+1].strip()
+					retVal.channum = count  # int(find_between(meta[0],'channel-id="','"'))
+					retVal.active = True
+					for value in chan_map['0'].values():
+						if value.epg == retVal.epg:
+							retVal.active = value.active
+							if not retVal.active:
+								logger.debug('Channel %s/%s is disabled by user.' % (retVal.channum, retVal.channame))
+							break
+					temp_chan_map['0'][count] = {}
+					temp_chan_map['0'][count] = retVal
 
-				temp_chan_map[m3u8_number][count] = {}
-				temp_chan_map[m3u8_number][count] = retVal
-			else:
-				m3u8_playlist += inputm3u8[i] + "\n"
+					temp_chan_map[m3u8_number][count] = {}
+					temp_chan_map[m3u8_number][count] = retVal
+				else:
+					m3u8_playlist += inputm3u8[i] + "\n"
 
 
-			# except:
-			# 	logger.debug("skipped:", inputm3u8[i])
+			except:
+				logger.debug("skipped:", inputm3u8[i])
 	# formatted_m3u8 = formatted_m3u8.replace("\n\n","\n")
 
 
