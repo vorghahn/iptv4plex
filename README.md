@@ -5,8 +5,9 @@ IPTV m3u8 Proxy for Plex Live TV &amp; DVR
 FFMPEG is required:
 Linux: "sudo apt install ffmpeg jq"
 Win/Mac: https://ffmpeg.zeranoe.com/builds/
+
 There are two versions of the same thing, one in .py and one in .exe (Mac/Linux exeutables to follow). The executables are simple compiled versions of the python and have no requirements.
-The python version requires python 3.5. There is a pip isntaller for it though to install the requirements "pip install iptv4plex"
+The python version requires python 3.5. There is a pip isntaller for it though to install the requirements "pip install iptv4plex --no-cache-dir"
 The pip installer will place the .py file into your user folder ie 'c:/users/username/iptv4plex/iptv4plex.py'.
 
 For Linux Python only:
@@ -15,14 +16,15 @@ Run this to install the GUI dependency "sudo apt-get install python3-tk"
 # Operation Instructions:
 Run the version of the file you want, you will be prompted with a GUI or otherwise a series of terminal prompts.
 
-You will need to enter an IP address, I recommend using a static IP on your Pc that is runnign this ie 192.168.1.10, google how to do this if you don't know. Plex doesn't seem to like 127.0.0.1!
+You will need to enter an IP address, I recommend using a static IP on your Pc that is running this ie 192.168.1.10, google how to do this if you don't know. Plex doesn't seem to like 127.0.0.1!
 You will need to enter a port number, use 80 or 5004 only.
 
 You will need to tell the proxy where FFMPEG is installed if on Windows, it should be the full path to the exe ie c:\ffmpeg\ffmpeg.exe
 
 You are able to add more than one m3u8/xmltv by using the add another source button in the GUI or concatenating the strings with a semicolon if using terminal (ie http://www.1.m3u8;http://www.2.m3u8).
 For each m3u8 you can determine the maximum number of connections to that particular IPTV source at once, if in doubt enter 6.
-M3u8 can be local files or URLs
+M3u8 can be local files or URLs.
+If you only have one EPG url then leave the others as blank, do not just put the same one in multiple times. Ensure you delete the sample url though!
 
 Main calls to it are:
 ip:port/                   *Combined output for plex THIS IS THE URL YOU PUT INTO PLEX NORMALLY
