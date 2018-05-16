@@ -19,6 +19,14 @@ import time
 import ntpath
 import requests as req
 import pickle
+import argparse
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("-d", "--debug", action='store_true', help="Console Debugging Enable")
+parser.add_argument("-hl", "--headless", action='store_true', help="Force Headless mode")
+
+args = parser.parse_args()
 
 
 try:
@@ -26,7 +34,7 @@ try:
 	HEADLESS = False
 except:
 	HEADLESS = True
-if 'headless' in sys.argv:
+if args.headless:
 	HEADLESS = True
 
 try:
@@ -41,12 +49,12 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.12
+__version__ = 0.2
 # Changelog
+# 0.2 - Added support for GZip epg and changed epg parsing to utf-8, added command arguments properly, refer -h (help)
 # 0.12 - Added more detail to channel parsing log
 # 0.11 - Changed archive failed print to a debug log. Reenabled try/except for m3u8 parsing.
 # 0.1 - Initial public release
-
 
 type = ""
 latestfile = "https://raw.githubusercontent.com/vorghahn/iptv4plex/master/iptv4plex.py"
@@ -112,11 +120,11 @@ else:
 
 def load_settings():
 	global LISTEN_IP, LISTEN_PORT, SERVER_HOST, M3U8URL, XMLURL, FFMPEGLOC, TUNERLIMITS
-	if not os.path.isfile(os.path.join(os.path.dirname(sys.argv[0]), 'proxysettings.json')):
+	if not os.path.isfile('./proxysettings.json'):
 		logger.debug("No config file found.")
 	try:
 		logger.debug("Parsing settings")
-		with open(os.path.join(os.path.dirname(sys.argv[0]), 'proxysettings.json')) as jsonConfig:
+		with open('./proxysettings.json') as jsonConfig:
 			config = {}
 			config = load(jsonConfig)
 			if "ffmpegloc" in config and platform.system() == 'Windows':
@@ -155,7 +163,7 @@ def load_settings():
 			if platform.system() == 'Windows':
 				FFMPEGLOC = config["ffmpegloc"]
 			TUNERLIMITS = config["tunerlimits"].split(';')
-			with open(os.path.join(os.path.dirname(sys.argv[0]), 'proxysettings.json'), 'w') as fp:
+			with open('./proxysettings.json', 'w') as fp:
 				dump(config, fp)
 		else:
 			root = tkinter.Tk()
@@ -181,7 +189,7 @@ logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 # Console logging
 console_handler = logging.StreamHandler()
-if "-d" in sys.argv:
+if args.debug:
 	console_handler.setLevel(logging.DEBUG)
 else:
 	console_handler.setLevel(logging.INFO)
@@ -189,11 +197,9 @@ console_handler.setFormatter(log_formatter)
 logger.addHandler(console_handler)
 
 # Rotating Log Files
-if not os.path.isdir(os.path.join(os.path.dirname(sys.argv[0]), 'cache')):
-	os.mkdir(os.path.join(os.path.dirname(sys.argv[0]), 'cache'))
-file_handler = RotatingFileHandler(os.path.join(os.path.dirname(sys.argv[0]), 'cache', 'status.log'),
-								   maxBytes=1024 * 1024 * 2,
-								   backupCount=5)
+if not os.path.isdir('./cache'):
+	os.mkdir('./cache')
+file_handler = RotatingFileHandler('./cache/status.log', maxBytes=1024 * 1024 * 2, backupCount=5)
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(log_formatter)
 logger.addHandler(file_handler)
@@ -207,9 +213,9 @@ def installer():
 	writetemplate()
 
 def writetemplate():
-	if not os.path.isdir(os.path.join(os.path.dirname(sys.argv[0]), 'Templates')):
-		os.mkdir(os.path.join(os.path.dirname(sys.argv[0]), 'Templates'))
-	f = open(os.path.join(os.path.dirname(sys.argv[0]), 'Templates', 'device.xml'), 'w')
+	if not os.path.isdir('./Templates'):
+		os.mkdir('./Templates')
+	f = open('./Templates/device.xml', 'w')
 	xmldata = """<root xmlns="urn:schemas-upnp-org:device-1-0">
 	<specVersion>
 		<major>1</major>
@@ -365,7 +371,7 @@ if not 'headless' in sys.argv:
 				for widget in master.winfo_children():
 					widget.destroy()
 				global LISTEN_IP, LISTEN_PORT, SERVER_HOST, XMLURL, M3U8URL, FFMPEGLOC, TUNERLIMITS
-				with open(os.path.join(os.path.dirname(sys.argv[0]), 'proxysettings.json'), 'w') as fp:
+				with open('./proxysettings.json', 'w') as fp:
 					dump(config, fp)
 
 				LISTEN_IP = config["ip"]
@@ -407,9 +413,9 @@ def thread_updater():
 				"Your version (%s%s) is out of date, the latest is %s, which has now be downloaded for you into the 'updates' subdirectory." % (
 					type, __version__, latest_ver))
 			newfilename = ntpath.basename(latestfile)
-			if not os.path.isdir(os.path.join(os.path.dirname(sys.argv[0]), 'updates')):
-				os.mkdir(os.path.join(os.path.dirname(sys.argv[0]), 'updates'))
-			requests.urlretrieve(latestfile, os.path.join(os.path.dirname(sys.argv[0]), 'updates', newfilename))
+			if not os.path.isdir('updates'):
+				os.mkdir('updates')
+			requests.urlretrieve(latestfile, os.path.join('updates', newfilename))
 
 			
 ############################################################
@@ -530,8 +536,8 @@ def m3u8_merger(url, m3u8_number):
 
 
 def epg_status():
-	if os.path.isfile(os.path.join(os.path.dirname(sys.argv[0]), 'cache', 'combined.xml')):
-		existing = os.path.join(os.path.dirname(sys.argv[0]), 'cache', 'combined.xml')
+	if os.path.isfile('./cache/combined.xml'):
+		existing = './cache/combined.xml'
 		cur_utc_hr = datetime.utcnow().replace(microsecond=0, second=0, minute=0).hour
 		target_utc_hr = (cur_utc_hr // 3) * 3
 		target_utc_datetime = datetime.utcnow().replace(microsecond=0, second=0, minute=0, hour=target_utc_hr)
@@ -555,15 +561,18 @@ def obtain_epg():
 
 def xmltv_merger(xml_url):
 	#todo download each xmltv
-	requests.urlretrieve(xml_url, './cache/raw.xml')
-	#master = ET.Element('tv')
-	#mtree = ET.ElementTree(master)
-	#mroot = mtree.getroot()
+	if xml_url.endswith('.gz'):
+		requests.urlretrieve(xml_url, './cache/raw.xml.gz')
+		opened = gzip.open('./cache/raw.xml.gz')
+	else:
+		requests.urlretrieve(xml_url, './cache/raw.xml')
+		opened = open('./cache/raw.xml', encoding="UTF-8")
+
 
 	tree = ET.parse('./cache/epg.xml')
 	treeroot = tree.getroot()
 
-	source = ET.parse('./cache/raw.xml')
+	source = ET.parse(opened)
 	
 	for channel in source.iter('channel'):
 		treeroot.append(channel)
@@ -571,8 +580,8 @@ def xmltv_merger(xml_url):
 	for programme in source.iter('programme'):
 		treeroot.append(programme)
 		
-	tree.write(os.path.join(os.path.dirname(sys.argv[0]), 'cache', 'epg.xml'))
-	with open(os.path.join(os.path.dirname(sys.argv[0]), 'cache', 'epg.xml'), 'r+') as f:
+	tree.write('./cache/epg.xml')
+	with open('./cache/epg.xml', 'r+') as f:
 		content = f.read()
 		f.seek(0, 0)
 		f.write('<?xml version="1.0" encoding="UTF-8"?>'.rstrip('\r\n') + content)
@@ -770,19 +779,18 @@ def main_tuner(request_file):
 	if request_file.lower().startswith('epg.'):
 		logger.info("EPG was requested by %s", request.environ.get('REMOTE_ADDR'))
 		obtain_epg()
-		with open(os.path.join(os.path.dirname(sys.argv[0]), 'cache', 'epg.xml'), 'r+') as f:
-			content = f.read()
-		response = Response(content, mimetype='text/xml')
-		headers = dict(response.headers)
-		headers.update(
-			{"Access-Control-Expose-Headers": "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
-			 "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Range",
-			 "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD"})
-		response.headers = headers
-		return response
+		# with open('./cache/epg.xml'), 'r+') as f:
+		# 	content = f.read()
+		# response = Response(content, mimetype='text/xml')
+		# headers = dict(response.headers)
+		# headers.update(
+		# 	{"Access-Control-Expose-Headers": "Accept-Ranges, Content-Encoding, Content-Length, Content-Range",
+		# 	 "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Range",
+		# 	 "Access-Control-Allow-Methods": "GET, POST, OPTIONS, HEAD"})
+		# response.headers = headers
+		# return response
 
-		#xmltv_merger()
-		#return send_from_directory(os.path.join(os.path.dirname(sys.argv[0]), 'cache'), 'combined.xml')
+		return send_from_directory('./cache', 'epg.xml')
 
 	# Icon for the favourites menu and browser tab
 	elif request_file.lower() == 'favicon.ico':
@@ -899,9 +907,9 @@ if __name__ == "__main__":
 			"Your version (%s%s) is out of date, the latest is %s, which has now be downloaded for you into the 'updates' subdirectory." % (
 			type, __version__, latest_ver))
 		newfilename = ntpath.basename(latestfile)
-		if not os.path.isdir(os.path.join(os.path.dirname(sys.argv[0]), 'updates')):
-			os.mkdir(os.path.join(os.path.dirname(sys.argv[0]), 'updates'))
-		requests.urlretrieve(latestfile, os.path.join(os.path.dirname(sys.argv[0]), 'updates', newfilename))
+		if not os.path.isdir('updates'):
+			os.mkdir('updates')
+		requests.urlretrieve(latestfile, os.path.join('./updates', newfilename))
 	else:
 		logger.info("Your version (%s) is up to date." % (__version__))
 	logger.info("Listening on %s:%d at %s/", LISTEN_IP, LISTEN_PORT, SERVER_HOST)
