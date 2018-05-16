@@ -41,8 +41,9 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.11
+__version__ = 0.12
 # Changelog
+# 0.12 - Added more detail to channel parsing log
 # 0.11 - Changed archive failed print to a debug log. Reenabled try/except for m3u8 parsing.
 # 0.1 - Initial public release
 
@@ -500,7 +501,7 @@ def m3u8_merger(url, m3u8_number):
 					retVal.language = find_between(grouper[0],'language="','"')
 					if not retVal.language.lower() in language_list and retVal.language != '':
 						language_list[retVal.language.lower()] = True
-						print(m3u8_number,retVal.channame)
+						# print(m3u8_number,retVal.channame)
 					retVal.playlist = m3u8_number
 					grouper = grouper[0] + ' channel-id="%s", %s' % (count, grouper[1])
 
@@ -524,7 +525,7 @@ def m3u8_merger(url, m3u8_number):
 
 
 			except:
-				logger.debug("skipped:", inputm3u8[i])
+				logger.debug("skipped line %s in m3u8 %s due to: %s" %(i, m3u8_number, inputm3u8[i]))
 	# formatted_m3u8 = formatted_m3u8.replace("\n\n","\n")
 
 
@@ -746,7 +747,6 @@ def web_page():
 					group_list[grp] = False
 		if 'language' in inc_data:
 			for lang in language_list:
-				print(lang)
 				if lang.capitalize() not in inc_data['language']:
 					language_list[lang] = False
 		if 'reset' in inc_data:
@@ -886,6 +886,7 @@ if __name__ == "__main__":
 
 	print("\n##############################################################")
 	print("Channels menu is %s" % SERVER_HOST)
+	print("Combined m3u8 url is %s/playlist.m3u8" % SERVER_HOST)
 	print("EPG url is %s/epg.xml" % SERVER_HOST)
 	print("Plex Live TV combined url is %s" % SERVER_HOST)
 	for i in M3U8URL.split(";"):
