@@ -7,10 +7,11 @@ Linux: "sudo apt install ffmpeg jq"
 Win/Mac: https://ffmpeg.zeranoe.com/builds/
 
 There are two versions of the same thing, one in .py and one in .exe (Mac/Linux exeutables to follow). The executables are simple compiled versions of the python and have no requirements.
-The python version requires python 3.5. There is a pip isntaller for it though to install the requirements "pip install iptv4plex --no-cache-dir"
+The python version requires python 3.5. There is a pip isntaller for it though to install the requirements "pip install iptv4plex --no-cache-dir" or you may need to use "pip3 install iptv4plex --no-cache-dir"
 The pip installer will place the .py file into your user folder ie 'c:/users/username/iptv4plex/iptv4plex.py'.
 
 For Linux Python only:
+Do not install if you plan on running as headless
 Run this to install the GUI dependency "sudo apt-get install python3-tk"
 
 # Operation Instructions:
@@ -49,3 +50,8 @@ There is a web page that allows for filtering of channels from the Plex outputs.
 Notes:
 All settings are saved into proxysettings.json and can be edited later or if deleted will prompt the GUI again on next start up.
 Channel filtering is saved in cache/channels.json.
+
+Command line arguments:
+-h help
+-d debug
+-hl headless, will disable the GUI
