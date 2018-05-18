@@ -213,9 +213,9 @@ def installer():
 	writetemplate()
 
 def writetemplate():
-	if not os.path.isdir('./Templates'):
-		os.mkdir('./Templates')
-	f = open('./Templates/device.xml', 'w')
+	if not os.path.isdir('./templates'):
+		os.mkdir('./templates')
+	f = open('./templates/device.xml', 'w')
 	xmldata = """<root xmlns="urn:schemas-upnp-org:device-1-0">
 	<specVersion>
 		<major>1</major>
@@ -240,7 +240,7 @@ def writetemplate():
 # INSTALL GUI
 ############################################################
 
-if not 'headless' in sys.argv:
+if not args.headless:
 	class GUI(tkinter.Frame):
 		def client_exit(self, root):
 			root.destroy()
