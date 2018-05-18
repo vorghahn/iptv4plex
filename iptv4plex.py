@@ -49,8 +49,9 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.2
+__version__ = 0.21
 # Changelog
+# 0.21 - Misc bug fixes
 # 0.2 - Added support for GZip epg and changed epg parsing to utf-8, added command arguments properly, refer -h (help)
 # 0.12 - Added more detail to channel parsing log
 # 0.11 - Changed archive failed print to a debug log. Reenabled try/except for m3u8 parsing.
