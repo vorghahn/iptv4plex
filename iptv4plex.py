@@ -563,7 +563,7 @@ def obtain_epg():
 
 def xmltv_merger(xml_url):
 	#todo download each xmltv
-	if xml_url.endswith('.gz') or xml_url.contains('xtream-editor.com'):
+	if xml_url.endswith('.gz') or 'xtream-editor.com' in xml_url:
 		requests.urlretrieve(xml_url, './cache/raw.xml.gz')
 		opened = gzip.open('./cache/raw.xml.gz')
 	else:
