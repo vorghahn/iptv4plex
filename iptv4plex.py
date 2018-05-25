@@ -49,8 +49,9 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.22
+__version__ = 0.23
 # Changelog
+# 0.23 - Added epg redirection detection
 # 0.22 - Added xtreame editor epg support and fallback for gzip attempt if normal fails.
 # 0.21 - Misc bug fixes
 # 0.2 - Added support for GZip epg and changed epg parsing to utf-8, added command arguments properly, refer -h (help)
@@ -563,7 +564,16 @@ def obtain_epg():
 
 def xmltv_merger(xml_url):
 	#todo download each xmltv
-	if xml_url.endswith('.gz') or 'xtream-editor.com' in xml_url:
+	response = req.get(xml_url)
+	if response.history:
+		logger.debug("Request was redirected")
+		for resp in response.history:
+			logger.debug("%s %s" % (resp.status_code, resp.url))
+		logger.debug("Final destination: %s %s" % (response.status_code, response.url))
+		xml_url = response.url
+	else:
+		logger.debug("Request was not redirected")
+	if xml_url.endswith('.gz'):
 		requests.urlretrieve(xml_url, './cache/raw.xml.gz')
 		opened = gzip.open('./cache/raw.xml.gz')
 	else:
@@ -785,7 +795,6 @@ def main_tuner(request_file):
 	logger.info("%s was requested by %s" % (request_file, request.environ.get('REMOTE_ADDR')))
 	# return epg
 	if request_file.lower().startswith('epg.'):
-		logger.info("EPG was requested by %s", request.environ.get('REMOTE_ADDR'))
 		obtain_epg()
 		# with open('./cache/epg.xml'), 'r+') as f:
 		# 	content = f.read()
@@ -806,7 +815,6 @@ def main_tuner(request_file):
 
 	elif request_file.lower() == 'playlist.m3u8':
 		obtain_m3u8()
-		logger.info("All channels playlist was requested by %s", request.environ.get('REMOTE_ADDR'))
 		output = '#EXTM3U\n' + m3u8_playlist
 		return Response(output, mimetype='application/x-mpegURL')
 
