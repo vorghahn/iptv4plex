@@ -49,8 +49,9 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.21
+__version__ = 0.22
 # Changelog
+# 0.22 - Added xtreame editor epg support and fallback for gzip attempt if normal fails.
 # 0.21 - Misc bug fixes
 # 0.2 - Added support for GZip epg and changed epg parsing to utf-8, added command arguments properly, refer -h (help)
 # 0.12 - Added more detail to channel parsing log
@@ -562,7 +563,7 @@ def obtain_epg():
 
 def xmltv_merger(xml_url):
 	#todo download each xmltv
-	if xml_url.endswith('.gz'):
+	if xml_url.endswith('.gz') or xml_url.contains('xtream-editor.com'):
 		requests.urlretrieve(xml_url, './cache/raw.xml.gz')
 		opened = gzip.open('./cache/raw.xml.gz')
 	else:
@@ -573,8 +574,14 @@ def xmltv_merger(xml_url):
 	tree = ET.parse('./cache/epg.xml')
 	treeroot = tree.getroot()
 
-	source = ET.parse(opened)
-	
+	try:
+		source = ET.parse(opened)
+	except:
+		# Try file as gzip instead
+		requests.urlretrieve(xml_url, './cache/raw.xml.gz')
+		opened = gzip.open('./cache/raw.xml.gz')
+		source = ET.parse(opened)
+
 	for channel in source.iter('channel'):
 		treeroot.append(channel)
 		
