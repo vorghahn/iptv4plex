@@ -49,8 +49,9 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.23
+__version__ = 0.3
 # Changelog
+# 0.3 - Tuneer Limit correction to an integer
 # 0.23 - Added epg redirection detection
 # 0.22 - Added xtreame editor epg support and fallback for gzip attempt if normal fails.
 # 0.21 - Misc bug fixes
@@ -617,7 +618,7 @@ def discover(tunerLimit=6,tunerNumber=""):
 		'Manufacturer': 'Silicondust',
 		'ModelNumber': 'HDTC-2US',
 		'FirmwareName': 'hdhomeruntc_atsc',
-		'TunerCount': tunerLimit,
+		'TunerCount': int(tunerLimit),
 		'FirmwareVersion': '20150826',
 		'DeviceID': '12345678%s' % tunerNumber,
 		'DeviceAuth': 'test1234%s' % tunerNumber,
@@ -660,7 +661,7 @@ def device(tunerLimit=6, tunerNumber=""):
 		'Manufacturer': 'Silicondust',
 		'ModelNumber': 'HDTC-2US',
 		'FirmwareName': 'hdhomeruntc_atsc',
-		'TunerCount': tunerLimit,
+		'TunerCount': int(tunerLimit),
 		'FirmwareVersion': '20150826',
 		'DeviceID': '12345678%s' % tunerNumber,
 		'DeviceAuth': 'test1234%s' % tunerNumber,
