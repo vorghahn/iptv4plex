@@ -49,8 +49,9 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.3
+__version__ = 0.31
 # Changelog
+# 0.31 - Updated readme, added a channame encode for website.
 # 0.3 - Tuneer Limit correction to an integer
 # 0.23 - Added epg redirection detection
 # 0.22 - Added xtreame editor epg support and fallback for gzip attempt if normal fails.
@@ -540,8 +541,8 @@ def m3u8_merger(url, m3u8_number):
 
 
 def epg_status():
-	if os.path.isfile('./cache/combined.xml'):
-		existing = './cache/combined.xml'
+	if os.path.isfile('./cache/epg.xml'):
+		existing = './cache/epg.xml'
 		cur_utc_hr = datetime.utcnow().replace(microsecond=0, second=0, minute=0).hour
 		target_utc_hr = (cur_utc_hr // 3) * 3
 		target_utc_datetime = datetime.utcnow().replace(microsecond=0, second=0, minute=0, hour=target_utc_hr)
@@ -719,7 +720,7 @@ def create_menu():
 		for i in chan_map['0']:
 			if i%3 == 1:
 				html.write("<tr>")
-			html.write(template.format(chan_map['0'][i].channum, chan_map['0'][i].channum, chan_map['0'][i].url,chan_map['0'][i].icon, chan_map['0'][i].channame, 'checked' if chan_map['0'][i].active else ''))
+			html.write(template.format(chan_map['0'][i].channum, chan_map['0'][i].channum, chan_map['0'][i].url,chan_map['0'][i].icon, chan_map['0'][i].channame.encode('utf-8'), 'checked' if chan_map['0'][i].active else ''))
 			if i%3 == 0:
 				html.write("</tr>")
 		html.write("</table><input type='submit' value='Submit'></form>")
@@ -849,8 +850,8 @@ def auto(request_file):
 	if request.args.get('url'):
 		logger.info("Piping custom URL")
 		url = request.args.get('url')
-		if '|' in url:
-			url = url.split('|')[0]
+	if '|' in url:
+		url = url.split('|')[0]
 	logger.debug(url)
 	import subprocess
 

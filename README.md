@@ -41,7 +41,7 @@ ip:port/0                  *The combined output and is the same as ip:port/
 ip:port/1                  *Output of first m3u8 source only
 ip:port/2                  *Output of second m3u8 source only
 ip:port/3                  *Output of third m3u8 source only
-This way you can add each IPTV source to Plex as a separate tuner and it will then utilise the Max Tuner Limits.
+This way you can add each IPTV source to Plex as a separate tuner and it will then utilise the Max Tuner Limits. Max Tuner Limits ONLY affect individual tuners and NOT the master/combined tuner.
 
 Proxy urls that you can use are posted in the terminal once the proxy is running.
 
