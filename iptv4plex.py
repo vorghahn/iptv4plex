@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import logging
 import os
 import sys
@@ -49,8 +48,9 @@ from flask import Flask, redirect, abort, request, Response, send_from_directory
 
 app = Flask(__name__, static_url_path='')
 
-__version__ = 0.31
+__version__ = 0.32
 # Changelog
+# 0.32 - Updated readme, changed default port to 5004, added .sh installers.
 # 0.31 - Updated readme, added a channame encode for website.
 # 0.3 - Tuneer Limit correction to an integer
 # 0.23 - Added epg redirection detection
@@ -100,7 +100,7 @@ class channelinfo:
 
 # These are just defaults, place your settings in a file called proxysettings.json in the same directory
 LISTEN_IP = "127.0.0.1"
-LISTEN_PORT = 80
+LISTEN_PORT = 5004
 SERVER_HOST = "http://" + LISTEN_IP + ":" + str(LISTEN_PORT)
 M3U8URL = ''
 XMLURL = ''
@@ -422,7 +422,7 @@ def thread_updater():
 				os.mkdir('updates')
 			requests.urlretrieve(latestfile, os.path.join('updates', newfilename))
 
-			
+
 ############################################################
 # playlist tools
 ############################################################
@@ -475,7 +475,7 @@ def obtain_m3u8():
 		pickle.dump(chan_map, f)
 
 
-		
+
 def m3u8_merger(url, m3u8_number):
 	global chan_map, m3u8_playlist, group_list, temp_chan_map
 	if url != '':
@@ -552,7 +552,7 @@ def epg_status():
 			logger.debug("Skipping download of epg")
 			return
 	obtain_epg()
-	
+
 def obtain_epg():
 	#clear epg file
 	f = open('./cache/epg.xml','w')
@@ -596,10 +596,10 @@ def xmltv_merger(xml_url):
 
 	for channel in source.iter('channel'):
 		treeroot.append(channel)
-		
+
 	for programme in source.iter('programme'):
 		treeroot.append(programme)
-		
+
 	tree.write('./cache/epg.xml')
 	with open('./cache/epg.xml', 'r+') as f:
 		content = f.read()
@@ -917,7 +917,6 @@ if __name__ == "__main__":
 	print("Plex Live TV combined url is %s" % SERVER_HOST)
 	for i in M3U8URL.split(";"):
 		print("Plex Live TV single tuner url for %s is %s/%s" % (i, SERVER_HOST, M3U8URL.split(";").index(i)+1))
-	print("Donations: PayPal to vorghahn.sstv@gmail.com  or BTC - 19qvdk7JYgFruie73jE4VvW7ZJBv8uGtFb")
 	print("##############################################################\n")
 
 	if __version__ < latest_ver:
