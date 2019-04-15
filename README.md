@@ -81,7 +81,7 @@ ENDPOINTS:
 
 **Plex setup guide**: [imgur link](https://imgur.com/a/BA6a2Q8)
 
-![Plex Setup part1](/docs/plex_setup.png)
+![Plex Setup part1](/docs/plex_setup1.png)
 
 ![Plex Setup part2](/docs/plex_setup2.png)
 
@@ -96,8 +96,6 @@ ENDPOINTS:
 ![Plex Setup part7](/docs/plex_setup7.png)
 
 ![Plex Setup part8](/docs/plex_setup8.png)
-
-![Plex Setup part9](/docs/plex_setup9.png)
 
 
 Each m3u8 (entered by comma separated values) you enter also has it's own individual tuner as described next:
