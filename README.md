@@ -40,7 +40,7 @@ Windows: **via Powershell**:
 cd $ENV:UserProfile
 if(!(Test-Path iptv4plex)){New-Item -Type Directory -Name iptv4plex}
 cd iptv4plex
-wget https://github.com/vorghahn/iptv4plex/blob/master/Windows/iptv4plex.exe -OutFile iptv4plex.exe
+wget https://github.com/vorghahn/iptv4plex/raw/master/Windows/iptv4plex.exe -OutFile iptv4plex.exe
 Start-Process iptv4plex.exe -Wait
 ```
 
