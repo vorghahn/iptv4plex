@@ -30,18 +30,16 @@ Linux/Mac:
 ```bash
 cd ~/
 git clone --depth 1 https://github.com/vorghahn/iptv4plex.git iptv4plex
-cd "bin/"
-bash start-proxy.sh
+python3 iptv4plex.py
 ```
 
 Windows: **via Powershell**:
 
 ```powershell
 cd $ENV:UserProfile
-if(!(Test-Path iptv4plex)){New-Item -Type Directory -Name iptv4plex}
+git clone --depth 1 https://github.com/vorghahn/iptv4plex.git iptv4plex
 cd iptv4plex
-wget https://github.com/vorghahn/iptv4plex/raw/master/Windows/iptv4plex.exe -OutFile iptv4plex.exe
-Start-Process iptv4plex.exe -Wait
+Start-Process -argument "python ./iptv4plex.py" -Wait
 ```
 
 
@@ -57,7 +55,7 @@ Linux: `Execute .py`
 
 Mac: `Execute .py`
 
-Windows: `Execute .exe`
+Windows: `Execute .py`
 
 
 # Comments:
@@ -117,6 +115,31 @@ Command line arguments:
 -h help
 -d debug
 -hl headless, will disable the GUI
+```
+
+# Running as Daemon
+
+Flask can't run easily as daemon root but you can specify the user
+```
+pip3 install flask
+sudo cp -R iptv4plex /usr/iptv4plex.service
+sudo chmod +x /usr/iptv4plex.service/iptv4plex.daemon
+sudo nano /etc/systemd/system/iptv4plex.service
+```
+copy/edit as bellow
+```
+[Unit]
+Description=iptv4plex daemon
+
+[Service]
+User=YOUR-USERNAME
+ExecStart=/usr/iptv4plex.service/iptv4plex.daemon
+TimeoutSec=600
+Restart=on-failure
+RuntimeDirectoryMode=755
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 # Donations:
