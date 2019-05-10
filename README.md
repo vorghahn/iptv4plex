@@ -141,6 +141,10 @@ RuntimeDirectoryMode=755
 [Install]
 WantedBy=multi-user.target
 ```
+enable Service autostart
+```
+sudo systemctl enable iptv4plex.service
+```
 
 # Donations:
 
