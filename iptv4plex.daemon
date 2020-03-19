@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cd /usr/iptv4plex.service
+python3 iptv4plex.py
